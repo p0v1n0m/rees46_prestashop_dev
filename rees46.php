@@ -104,18 +104,54 @@ class Rees46 extends Module
         $output = null;
 
         if (Tools::isSubmit('submit' . $this->name)) {
-            Configuration::updateValue('REES46_STORE_ID', Tools::getValue('REES46_STORE_ID'));
-            Configuration::updateValue('REES46_SECRET_KEY', Tools::getValue('REES46_SECRET_KEY'));
-            Configuration::updateValue('REES46_LOG', Tools::getValue('REES46_LOG'));
-            Configuration::updateValue('REES46_XML_STATUS', Tools::getValue('REES46_XML_STATUS'));
-            Configuration::updateValue('REES46_XML_CURRENCY', Tools::getValue('REES46_XML_CURRENCY'));
-            Configuration::updateValue('REES46_XML_URL', Tools::getValue('REES46_XML_URL'));
-            Configuration::updateValue('REES46_ORDER_CREATED', json_encode(Tools::getValue('REES46_ORDER_CREATED')));
-            Configuration::updateValue('REES46_ORDER_COMPLETED', json_encode(Tools::getValue('REES46_ORDER_COMPLETED')));
-            Configuration::updateValue('REES46_ORDER_CANCELLED', json_encode(Tools::getValue('REES46_ORDER_CANCELLED')));
-            Configuration::updateValue('REES46_CUSTOMER_COUNTRY', Tools::getValue('REES46_CUSTOMER_COUNTRY'));
-            Configuration::updateValue('REES46_CUSTOMER_NEWSLETTER', Tools::getValue('REES46_CUSTOMER_NEWSLETTER'));
-            Configuration::updateValue('REES46_CUSTOMER_OPTIN', Tools::getValue('REES46_CUSTOMER_OPTIN'));
+            Configuration::updateValue(
+                'REES46_STORE_ID',
+                Tools::getValue('REES46_STORE_ID')
+            );
+            Configuration::updateValue(
+                'REES46_SECRET_KEY',
+                Tools::getValue('REES46_SECRET_KEY')
+            );
+            Configuration::updateValue(
+                'REES46_LOG',
+                Tools::getValue('REES46_LOG')
+            );
+            Configuration::updateValue(
+                'REES46_XML_STATUS',
+                Tools::getValue('REES46_XML_STATUS')
+            );
+            Configuration::updateValue(
+                'REES46_XML_CURRENCY',
+                Tools::getValue('REES46_XML_CURRENCY')
+            );
+            Configuration::updateValue(
+                'REES46_XML_URL',
+                Tools::getValue('REES46_XML_URL')
+            );
+            Configuration::updateValue(
+                'REES46_ORDER_CREATED',
+                Tools::jsonEncode(Tools::getValue('REES46_ORDER_CREATED'))
+            );
+            Configuration::updateValue(
+                'REES46_ORDER_COMPLETED',
+                Tools::jsonEncode(Tools::getValue('REES46_ORDER_COMPLETED'))
+            );
+            Configuration::updateValue(
+                'REES46_ORDER_CANCELLED',
+                Tools::jsonEncode(Tools::getValue('REES46_ORDER_CANCELLED'))
+            );
+            Configuration::updateValue(
+                'REES46_CUSTOMER_COUNTRY',
+                Tools::getValue('REES46_CUSTOMER_COUNTRY')
+            );
+            Configuration::updateValue(
+                'REES46_CUSTOMER_NEWSLETTER',
+                Tools::getValue('REES46_CUSTOMER_NEWSLETTER')
+            );
+            Configuration::updateValue(
+                'REES46_CUSTOMER_OPTIN',
+                Tools::getValue('REES46_CUSTOMER_OPTIN')
+            );
 
             $output = $this->displayConfirmation($this->l('Settings updated'));
         }
@@ -298,10 +334,12 @@ class Rees46 extends Module
                 'title' => $this->l('Save'),
                 'icon' => 'icon-save',
             ),
-            'description' => $this->l('Export only once on time initial install module. Will be exported orders over the past six months with selected statuses of above. Please save settings before export!'),
+            'description' => $this->l('Export only once on time initial install module.')
+            . $this->l('Will be exported orders over the past six months with selected statuses of above.')
+            . $this->l('Please save settings before export.'),
             'buttons' => array(
                 array(
-                    'href' => AdminController::$currentIndex.'&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules'),
+                    'href' => '',
                     'title' => $this->l('Export Orders'),
                     'icon' => 'icon-upload',
                 ),
@@ -342,7 +380,8 @@ class Rees46 extends Module
                 array(
                     'type' => 'select',
                     'label' => $this->l('Newsletter subscribers'),
-                    'desc' => $this->l('Filter customers who have subscribed to the newsletter or not, and who have an account or not.'),
+                    'desc' => $this->l('Filter customers who have subscribed to the newsletter or not,')
+                    . $this->l(' and who have an account or not.'),
                     'name' => 'REES46_CUSTOMER_NEWSLETTER',
                     'options' => array(
                         'query' => array(
@@ -392,14 +431,14 @@ class Rees46 extends Module
                     )
                 ),
             ),
-            'description' => $this->l('Please save settings before export!'),
+            'description' => $this->l('Please save settings before export.'),
             'submit' => array(
                 'title' => $this->l('Save'),
                 'icon' => 'icon-save',
             ),
             'buttons' => array(
                 array(
-                    'href' => AdminController::$currentIndex.'&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules'),
+                    'href' => '',
                     'title' => $this->l('Export Customers'),
                     'icon' => 'icon-upload',
                 ),
@@ -413,7 +452,7 @@ class Rees46 extends Module
             ),
             'buttons' => array(
                 array(
-                    'href' => AdminController::$currentIndex.'&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules'),
+                    'href' => '',
                     'title' => $this->l('Check Necessary Files'),
                     'icon' => 'icon-refresh',
                 ),
@@ -437,8 +476,8 @@ class Rees46 extends Module
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submit' . $this->name;
         $helper->currentIndex =
-        $this->context->link->getAdminLink('AdminModules', false) . '&configure=' . $this->name . '&tab_module=' . $this->tab
-        . '&module_name=' . $this->name;
+        $this->context->link->getAdminLink('AdminModules', false) . '&configure=' . $this->name
+        . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = array(
             'fields_value' => array(),
@@ -447,9 +486,15 @@ class Rees46 extends Module
         );
 
         foreach (Rees46::$fields as $field) {
-            if ('REES46_ORDER_CREATED' == $field || 'REES46_ORDER_COMPLETED' == $field || 'REES46_ORDER_CANCELLED' == $field) {
+            if ('REES46_ORDER_CREATED' == $field
+                || 'REES46_ORDER_COMPLETED' == $field
+                || 'REES46_ORDER_CANCELLED' == $field) {
                 foreach (OrderState::getOrderStates((int)$this->context->language->id) as $order_status) {
-                    $helper->tpl_vars['fields_value'][$field . '[]_' . $order_status['id_order_state']] = in_array($order_status['id_order_state'], json_decode(Configuration::get($field), true)) ? true : false;
+                    $helper->tpl_vars['fields_value'][$field . '[]_' . $order_status['id_order_state']] =
+                        in_array(
+                            $order_status['id_order_state'],
+                            Tools::jsonDecode(Configuration::get($field), true)
+                        ) ? true : false;
                 }
             } else {
                 $helper->tpl_vars['fields_value'][$field] = Configuration::get($field);
