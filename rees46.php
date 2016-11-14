@@ -92,6 +92,8 @@ class Rees46 extends Module
 
     public function getContent()
     {
+        $this->context->controller->addJS($this->_path.'js/rees46_admin.js');
+
         $output = null;
 
         if (Tools::isSubmit('submit' . $this->name)) {
@@ -144,15 +146,18 @@ class Rees46 extends Module
                 Tools::getValue('REES46_CUSTOMER_OPTIN')
             );
 
-            $output = $this->displayConfirmation($this->l('Settings updated'));
+            $output .= $this->displayConfirmation($this->l('Settings updated'));
         }
 
-        return $output.$this->renderForm();
+        //$output .= $this->renderForm().$this->renderFormWebPush();
+        $output .= $this->renderForm();
+
+        return $output;
     }
 
     public function renderForm()
     {
-        $this->fields_form[0]['form'] = array(
+        $fields_form[0]['form'] = array(
             'legend' => array(
                 'title' => $this->l('Settings'),
                 'icon' => 'icon-cogs',
@@ -194,7 +199,7 @@ class Rees46 extends Module
             ),
         );
 
-        $this->fields_form[1]['form'] = array(
+        $fields_form[1]['form'] = array(
             'legend' => array(
                 'title' => $this->l('Products'),
                 'icon' => 'icon-book',
@@ -251,7 +256,7 @@ class Rees46 extends Module
             );
         }
 
-        $this->fields_form[2]['form'] = array(
+        $fields_form[2]['form'] = array(
             'legend' => array(
                 'title' => $this->l('Orders'),
                 'icon' => 'icon-shopping-cart',
@@ -352,7 +357,7 @@ class Rees46 extends Module
             );
         }
 
-        $this->fields_form[3]['form'] = array(
+        $fields_form[3]['form'] = array(
             'legend' => array(
                 'title' => $this->l('Customers'),
                 'icon' => 'icon-group',
@@ -438,22 +443,21 @@ class Rees46 extends Module
             ),
         );
 
-        $this->fields_form[4]['form'] = array(
+        $fields_form[4]['form'] = array(
             'legend' => array(
                 'title' => $this->l('Web Push'),
                 'icon' => 'icon-envelope',
             ),
             'buttons' => array(
                 array(
-                    'href' => '',
                     'title' => $this->l('Check Necessary Files'),
                     'icon' => 'icon-refresh',
-                    'id' => '',
+                    'id' => 'submitCheckFiles',
                 ),
             ),
         );
 
-        $this->fields_form[5]['form'] = array(
+        $fields_form[5]['form'] = array(
             'legend' => array(
                 'title' => $this->l('Recommendations'),
                 'icon' => 'icon-eye',
@@ -466,12 +470,13 @@ class Rees46 extends Module
         $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
         $helper->default_form_language = $lang->id;
         $helper->allow_employee_form_lang =
-        Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submit' . $this->name;
-        $helper->currentIndex =
-        $this->context->link->getAdminLink('AdminModules', false) . '&configure=' . $this->name
-        . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
+            . '&configure=' . $this->name
+            . '&tab_module=' . $this->tab
+            . '&module_name='. $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = array(
             'fields_value' => array(),
@@ -491,6 +496,94 @@ class Rees46 extends Module
             }
         }
 
-        return $helper->generateForm($this->fields_form);
+        return $helper->generateForm($fields_form);
+    }
+
+    /*public function renderFormWebPush()
+    {
+        $fields_form[0]['form'] = array(
+            'action' => 'ajax.php',
+            'legend' => array(
+                'title' => $this->l('Web Push'),
+                'icon' => 'icon-envelope',
+            ),
+            'buttons' => array(
+                array(
+                    'title' => $this->l('Check Necessary Files'),
+                    'icon' => 'icon-refresh',
+                    'id' => 'submitStartCheck',
+                ),
+            ),
+        );
+
+        $helper = new HelperForm();
+        $helper->show_toolbar = false;
+        $helper->table = $this->table;
+        $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
+        $helper->default_form_language = $lang->id;
+        $helper->allow_employee_form_lang =
+            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+        $helper->identifier = $this->identifier;
+        $helper->submit_action = 'submit' . $this->name . 'WebPush';
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
+            . '&configure=' . $this->name
+            . '&tab_module=' . $this->tab
+            . '&module_name=' . $this->name
+            . '&ajax=1';
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        $helper->tpl_vars = array(
+            'fields_value' => array(),
+            'languages' => $this->context->controller->getLanguages(),
+            'id_language' => $this->context->language->id,
+        );
+
+        return $helper->generateForm($fields_form);
+    }*/
+
+    public function ajaxProcessCheckFiles()
+    {
+        $json = array();
+
+        $dir = _PS_ROOT_DIR_ . '/';
+
+        $files = array(
+            'manifest.json',
+            'push_sw.js'
+        );
+
+        foreach ($files as $key => $file) {
+            if (!is_file($dir . $file)) {
+                $ch = curl_init();
+
+                curl_setopt($ch, CURLOPT_URL, 'https://raw.githubusercontent.com/rees46/web-push-files/master/' . $file);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                $result = curl_exec($ch);
+                $info = curl_getinfo($ch);
+
+                curl_close($ch);
+
+                if ($info['http_code'] < 200 || $info['http_code'] >= 300) {
+                    if (Configuration::get('REES46_LOG')) {
+                        $this->log->write('REES46 [error]: Not loading file ' . $file . ' [' . $info['http_code'] . ']');
+                    }
+                } else {
+                    file_put_contents($dir . $file, $result);
+
+                    if (Configuration::get('REES46_LOG')) {
+                        $this->log->write('REES46 [success]: Loading file ' . $file);
+                    }
+                }
+            }
+
+            if (is_file($dir . $file)) {
+                $json['success'][$key] = sprintf($this->l('Success: File %s loaded!'), $file);
+            } else {
+                $json['error'][$key] = sprintf($this->l('Error: You need to load file %s!'), $file);
+            }
+        }
+
+        die(Tools::jsonEncode($json));
     }
 }
