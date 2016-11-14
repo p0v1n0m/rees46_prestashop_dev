@@ -41,8 +41,7 @@ class Rees46 extends Module
         'REES46_ORDER_COMPLETED',
         'REES46_ORDER_CANCELLED',
         'REES46_CUSTOMER_COUNTRY',
-        'REES46_CUSTOMER_NEWSLETTER',
-        'REES46_CUSTOMER_OPTIN',
+        'REES46_CUSTOMER_TYPE',
     );
 
     public function __construct()
@@ -138,12 +137,8 @@ class Rees46 extends Module
                 Tools::getValue('REES46_CUSTOMER_COUNTRY')
             );
             Configuration::updateValue(
-                'REES46_CUSTOMER_NEWSLETTER',
-                Tools::getValue('REES46_CUSTOMER_NEWSLETTER')
-            );
-            Configuration::updateValue(
-                'REES46_CUSTOMER_OPTIN',
-                Tools::getValue('REES46_CUSTOMER_OPTIN')
+                'REES46_CUSTOMER_TYPE',
+                Tools::getValue('REES46_CUSTOMER_TYPE')
             );
 
             $output .= $this->displayConfirmation($this->l('Settings updated'));
@@ -335,10 +330,10 @@ class Rees46 extends Module
                 . $this->l(' Please save settings before export.'),
             'buttons' => array(
                 array(
-                    'href' => '',
                     'title' => $this->l('Export Orders'),
                     'icon' => 'icon-upload',
-                    'id' => '',
+                    'id' => 'submitExportOrders',
+                    'name' => 'submitExportOrders',
                 ),
             ),
         );
@@ -365,8 +360,7 @@ class Rees46 extends Module
             'input' => array(
                 array(
                     'type' => 'select',
-                    'label' => $this->l('Customers\' country'),
-                    'desc' => $this->l('Filter customers by country.'),
+                    'label' => $this->l('Filter customers by country'),
                     'name' => 'REES46_CUSTOMER_COUNTRY',
                     'options' => array(
                         'query' => $countries,
@@ -376,38 +370,8 @@ class Rees46 extends Module
                 ),
                 array(
                     'type' => 'select',
-                    'label' => $this->l('Newsletter subscribers'),
-                    'desc' => $this->l('Filter customers who have subscribed to the newsletter or not,')
-                    . $this->l(' and who have an account or not.'),
-                    'name' => 'REES46_CUSTOMER_NEWSLETTER',
-                    'options' => array(
-                        'query' => array(
-                            array(
-                                'id' => 0,
-                                'name' => $this->l('All subscribers'),
-                            ),
-                            array(
-                                'id' => 1,
-                                'name' => $this->l('Subscribers with account'),
-                            ),
-                            array(
-                                'id' => 2,
-                                'name' => $this->l('Subscribers without account'),
-                            ),
-                            array(
-                                'id' => 3,
-                                'name' => $this->l('Non-subscribers'),
-                            ),
-                        ),
-                        'id' => 'id',
-                        'name' => 'name',
-                    )
-                ),
-                array(
-                    'type' => 'select',
-                    'label' => $this->l('Opt-in subscribers'),
-                    'desc' => $this->l('Filter customers who have agreed to receive your partners\' offers or not.'),
-                    'name' => 'REES46_CUSTOMER_OPTIN',
+                    'label' => $this->l('Customers type'),
+                    'name' => 'REES46_CUSTOMER_TYPE',
                     'options' => array(
                         'query' => array(
                             array(
@@ -415,13 +379,9 @@ class Rees46 extends Module
                                 'name' => $this->l('All customers'),
                             ),
                             array(
-                                'id' => 2,
-                                'name' => $this->l('Opt-in subscribers'),
-                            ),
-                            array(
                                 'id' => 1,
-                                'name' => $this->l('Opt-in non-subscribers'),
-                            )
+                                'name' => $this->l('Newsletter subscribers'),
+                            ),
                         ),
                         'id' => 'id',
                         'name' => 'name',
@@ -435,10 +395,10 @@ class Rees46 extends Module
             ),
             'buttons' => array(
                 array(
-                    'href' => '',
                     'title' => $this->l('Export Customers'),
                     'icon' => 'icon-upload',
-                    'id' => '',
+                    'id' => 'submitExportCustomers',
+                    'name' => 'submitExportCustomers',
                 ),
             ),
         );
@@ -453,6 +413,7 @@ class Rees46 extends Module
                     'title' => $this->l('Check Necessary Files'),
                     'icon' => 'icon-refresh',
                     'id' => 'submitCheckFiles',
+                    'name' => 'submitCheckFiles',
                 ),
             ),
         );
@@ -565,14 +526,14 @@ class Rees46 extends Module
                 curl_close($ch);
 
                 if ($info['http_code'] < 200 || $info['http_code'] >= 300) {
-                    if (Configuration::get('REES46_LOG')) {
-                        $this->log->write('REES46 [error]: Not loading file ' . $file . ' [' . $info['http_code'] . ']');
+                    if (Configuration::get('REES46_LOG') == 1) {
+                        PrestaShopLogger::addLog('REES46 [error]: Not loading file ' . $file . ' [' . $info['http_code'] . ']', 3);
                     }
                 } else {
                     file_put_contents($dir . $file, $result);
 
-                    if (Configuration::get('REES46_LOG')) {
-                        $this->log->write('REES46 [success]: Loading file ' . $file);
+                    if (Configuration::get('REES46_LOG') == 1) {
+                        PrestaShopLogger::addLog('REES46 [success]: Loading file ' . $file, 1);
                     }
                 }
             }
@@ -584,6 +545,129 @@ class Rees46 extends Module
             }
         }
 
-        die(Tools::jsonEncode($json));
+        echo (Tools::jsonEncode($json));
+    }
+
+    public function ajaxProcessExportCustomers() {
+        $json = array();
+
+        $next = (int)Tools::getValue('next');
+        $limit = 100;
+
+        $filter_data = array(
+            'start' => ($next - 1) * $limit,
+            'limit' => $limit,
+        );
+
+        if ($filter_data['start'] < 0) {
+            $filter_data['start'] = 0;
+        }
+
+        $results_total = (int)$this->getTotalCustomers();
+
+        $results = $this->getCustomers($filter_data);
+
+        $data = array();
+
+        if ($results) {
+            foreach ($results as $result) {
+                $data[] = array(
+                    'id' => $result['id_customer'],
+                    'email' => $result['email'],
+                );
+            }
+        }
+
+        if (!empty($data)) {
+            $params['shop_id'] = Configuration::get('REES46_STORE_ID');
+            $params['shop_secret'] = Configuration::get('REES46_SECRET_KEY');
+            $params['audience'] = $data;
+
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            curl_setopt($ch, CURLOPT_URL, 'http://api.rees46.com/import/audience');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, true));
+
+            $return['result'] = curl_exec($ch);
+            $return['info'] = curl_getinfo($ch);
+
+            curl_close($ch);
+
+            if ($return['info']['http_code'] < 200 || $return['info']['http_code'] >= 300) {
+                $json['error'] = 'Error: No data for export!';
+
+                if (Configuration::get('REES46_LOG') == 1) {
+                    PrestaShopLogger::addLog('REES46 [error]: Export customers [' . $return['info']['http_code'] . ']', 3);
+                }
+            } else {
+                if ($results_total > $next * $limit) {
+                    $json['next'] = $next + 1;
+
+                    $json['success'] = sprintf($this->l('Processing: You have exported %s of %s selected customers into REES46!'), $next * $limit, $results_total);
+                } else {
+                    $json['success'] = sprintf($this->l('Success: You have exported all %s selected customers into REES46!'), $results_total);
+
+                    if (Configuration::get('REES46_LOG') == 1) {
+                        PrestaShopLogger::addLog('REES46 [success]: Export customers [' . $results_total . ']', 1);
+                    }
+                }
+            }
+        } else {
+            $json['error'] = 'Error: No data for export!';
+        }
+
+        echo (Tools::jsonEncode($json));
+    }
+
+    private function getCustomers($data = array())
+    {
+        $query = new DbQuery();
+        $query->select('c.`id_customer`, c.`email`');
+        $query->from('customer', 'c');
+
+        if (Configuration::get('REES46_CUSTOMER_TYPE') == 1) {
+            $query->where('c.`optin` = ' . (int)Configuration::get('REES46_CUSTOMER_TYPE'));
+        }
+
+        if (Context::getContext()->cookie->shopContext) {
+            $query->where('c.`id_shop` = ' . (int)Context::getContext()->shop->id);
+        }
+
+        if (isset($data['start']) || isset($data['limit'])) {
+            if ($data['start'] < 0) {
+                $data['start'] = 0;
+            }
+
+            if ($data['limit'] < 1) {
+                $data['limit'] = 20;
+            }
+
+            $query->limit((int)$data['start'], (int)$data['limit']);
+        }
+
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
+    }
+
+    private function getTotalCustomers()
+    {
+        $query = new DbQuery();
+        $query->select('COUNT(*) AS total');
+        $query->from('customer', 'c');
+
+        if (Configuration::get('REES46_CUSTOMER_TYPE') == 1) {
+            $query->where('c.`optin` = ' . (int)Configuration::get('REES46_CUSTOMER_TYPE'));
+        }
+
+        if (Context::getContext()->cookie->shopContext) {
+            $query->where('c.`id_shop` = ' . (int)Context::getContext()->shop->id);
+        }
+
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
+
+        return $result[0]['total'];
     }
 }

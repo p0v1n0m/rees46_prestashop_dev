@@ -25,33 +25,78 @@
 
 $(document).ready(function() {
 	$('#submitCheckFiles').click(function() {
-		$.ajax({
-			url: admin_modules_link,
-			data: {
-				ajax: true,
-				configure: 'rees46',
-				action: 'checkFiles',
-			},
-			type: 'post',
-			dataType: 'json',
-			beforeSend: function() {
-				$('#submitCheckFiles').button('loading');
-			},
-			success: function(json) {
-				$('#submitCheckFiles').button('reset');
+		checkFiles();
+	});
 
-				if (json['success']) {
-					$.map(json['success'], function(success) {
-						showSuccessMessage(success);
-					});
-				}
+	$('#submitExportOrders').click(function() {
+		exportData('orders');
+	});
 
-				if (json['error']) {
-					$.map(json['error'], function(error) {
-						showErrorMessage(error);
-					});
-				}
-			}
-		});
+	$('#submitExportCustomers').click(function() {
+		exportData('customers');
 	});
 });
+
+function exportData(type, next = 1) {
+	$.ajax({
+		url: admin_modules_link,
+		data: {
+			ajax: true,
+			configure: 'rees46',
+			action: 'export' + type,
+			type: type,
+			next: next,
+		},
+		type: 'post',
+		dataType: 'json',
+		beforeSend: function() {
+			$('#submitExport' + type).button('loading');
+		},
+		success: function(json) {
+			if (json['success']) {
+				showSuccessMessage(json['success']);
+			}
+
+			if (json['next']) {
+				exportData(type, json['next']);
+			} else {
+				$('#submitExport' + type).button('reset');
+			}
+
+			if (json['error']) {
+				showErrorMessage(json['error']);
+			}
+		}
+	});
+}
+
+function checkFiles() {
+	$.ajax({
+		url: admin_modules_link,
+		data: {
+			ajax: true,
+			configure: 'rees46',
+			action: 'checkFiles',
+		},
+		type: 'post',
+		dataType: 'json',
+		beforeSend: function() {
+			$('#submitCheckFiles').button('loading');
+		},
+		success: function(json) {
+			$('#submitCheckFiles').button('reset');
+
+			if (json['success']) {
+				$.map(json['success'], function(success) {
+					showSuccessMessage(success);
+				});
+			}
+
+			if (json['error']) {
+				$.map(json['error'], function(error) {
+					showErrorMessage(error);
+				});
+			}
+		}
+	});
+}
