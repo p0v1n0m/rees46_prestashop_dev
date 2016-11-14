@@ -67,18 +67,9 @@ class Rees46 extends Module
     public function install()
     {
         if (parent::install()) {
-            Configuration::updateValue('REES46_STORE_ID', '');
-            Configuration::updateValue('REES46_SECRET_KEY', '');
-            Configuration::updateValue('REES46_LOG', '');
-            Configuration::updateValue('REES46_XML_STATUS', '');
-            Configuration::updateValue('REES46_XML_CURRENCY', '');
-            Configuration::updateValue('REES46_XML_URL', 'rees46');
-            Configuration::updateValue('REES46_ORDER_CREATED', '');
-            Configuration::updateValue('REES46_ORDER_COMPLETED', '');
-            Configuration::updateValue('REES46_ORDER_CANCELLED', '');
-            Configuration::updateValue('REES46_CUSTOMER_COUNTRY', '');
-            Configuration::updateValue('REES46_CUSTOMER_NEWSLETTER', '');
-            Configuration::updateValue('REES46_CUSTOMER_OPTIN', '');
+            foreach (Rees46::$fields as $field) {
+                Configuration::updateValue($field, '');
+            }
 
             return true;
         } else {
@@ -126,7 +117,7 @@ class Rees46 extends Module
             );
             Configuration::updateValue(
                 'REES46_XML_URL',
-                Tools::getValue('REES46_XML_URL')
+                'https://rees46.com'
             );
             Configuration::updateValue(
                 'REES46_ORDER_CREATED',
@@ -335,13 +326,14 @@ class Rees46 extends Module
                 'icon' => 'icon-save',
             ),
             'description' => $this->l('Export only once on time initial install module.')
-            . $this->l('Will be exported orders over the past six months with selected statuses of above.')
-            . $this->l('Please save settings before export.'),
+                . $this->l(' Will be exported orders over the past six months with selected statuses of above.')
+                . $this->l(' Please save settings before export.'),
             'buttons' => array(
                 array(
                     'href' => '',
                     'title' => $this->l('Export Orders'),
                     'icon' => 'icon-upload',
+                    'id' => '',
                 ),
             ),
         );
@@ -441,6 +433,7 @@ class Rees46 extends Module
                     'href' => '',
                     'title' => $this->l('Export Customers'),
                     'icon' => 'icon-upload',
+                    'id' => '',
                 ),
             ),
         );
@@ -455,6 +448,7 @@ class Rees46 extends Module
                     'href' => '',
                     'title' => $this->l('Check Necessary Files'),
                     'icon' => 'icon-refresh',
+                    'id' => '',
                 ),
             ),
         );
@@ -486,15 +480,11 @@ class Rees46 extends Module
         );
 
         foreach (Rees46::$fields as $field) {
-            if ('REES46_ORDER_CREATED' == $field
-                || 'REES46_ORDER_COMPLETED' == $field
-                || 'REES46_ORDER_CANCELLED' == $field) {
+            if ('REES46_ORDER' == substr($field, 0, 12)) {
                 foreach (OrderState::getOrderStates((int)$this->context->language->id) as $order_status) {
                     $helper->tpl_vars['fields_value'][$field . '[]_' . $order_status['id_order_state']] =
-                        in_array(
-                            $order_status['id_order_state'],
-                            Tools::jsonDecode(Configuration::get($field), true)
-                        ) ? true : false;
+                        in_array($order_status['id_order_state'],
+                        Tools::jsonDecode(Configuration::get($field), true)) ? true : false;
                 }
             } else {
                 $helper->tpl_vars['fields_value'][$field] = Configuration::get($field);
