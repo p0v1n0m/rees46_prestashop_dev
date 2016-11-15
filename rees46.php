@@ -33,14 +33,13 @@ class Rees46 extends Module
     protected static $fields = array(
         'REES46_STORE_ID',
         'REES46_SECRET_KEY',
-        'REES46_LOG',
+        'REES46_LOG_STATUS',
         'REES46_XML_STATUS',
         'REES46_XML_CURRENCY',
         'REES46_XML_URL',
         'REES46_ORDER_CREATED',
         'REES46_ORDER_COMPLETED',
         'REES46_ORDER_CANCELLED',
-        'REES46_CUSTOMER_COUNTRY',
         'REES46_CUSTOMER_TYPE',
     );
 
@@ -59,7 +58,7 @@ class Rees46 extends Module
         parent::__construct();
 
         $this->displayName = $this->l('REES46');
-        $this->description = $this->l('Система рекомендаций для вашего магазина.');
+        $this->description = $this->l('All-in-one eCommerce marketing and sales automation platform.');
         $this->ps_versions_compliancy = array('min' => '1.6.1.0', 'max' => '1.6.99.99');
     }
 
@@ -91,7 +90,7 @@ class Rees46 extends Module
 
     public function getContent()
     {
-        $this->context->controller->addJS($this->_path.'js/rees46_admin.js');
+        $this->context->controller->addJS($this->_path.'views/js/admin/rees46.js');
 
         $output = null;
 
@@ -105,8 +104,8 @@ class Rees46 extends Module
                 Tools::getValue('REES46_SECRET_KEY')
             );
             Configuration::updateValue(
-                'REES46_LOG',
-                Tools::getValue('REES46_LOG')
+                'REES46_LOG_STATUS',
+                Tools::getValue('REES46_LOG_STATUS')
             );
             Configuration::updateValue(
                 'REES46_XML_STATUS',
@@ -133,10 +132,6 @@ class Rees46 extends Module
                 Tools::jsonEncode(Tools::getValue('REES46_ORDER_CANCELLED'))
             );
             Configuration::updateValue(
-                'REES46_CUSTOMER_COUNTRY',
-                Tools::getValue('REES46_CUSTOMER_COUNTRY')
-            );
-            Configuration::updateValue(
                 'REES46_CUSTOMER_TYPE',
                 Tools::getValue('REES46_CUSTOMER_TYPE')
             );
@@ -144,7 +139,7 @@ class Rees46 extends Module
             $output .= $this->displayConfirmation($this->l('Settings updated'));
         }
 
-        //$output .= $this->renderForm().$this->renderFormWebPush();
+        //$output .= $this->renderForm().$this->renderFormRecommendations();
         $output .= $this->renderForm();
 
         return $output;
@@ -172,7 +167,7 @@ class Rees46 extends Module
                 array(
                     'type' => 'switch',
                     'label' => $this->l('Logging'),
-                    'name' => 'REES46_LOG',
+                    'name' => 'REES46_LOG_STATUS',
                     'is_bool' => true,
                     'values' => array(
                         array(
@@ -338,36 +333,12 @@ class Rees46 extends Module
             ),
         );
 
-        $countries = array(
-            array(
-                'id' => 0,
-                'name' => $this->l('All countries'),
-            ),
-        );
-
-        foreach (Country::getCountries($this->context->language->id) as $country) {
-            $countries[] = array(
-                'id' => $country['id_country'],
-                'name' => $country['name'],
-            );
-        }
-
         $fields_form[3]['form'] = array(
             'legend' => array(
                 'title' => $this->l('Customers'),
                 'icon' => 'icon-group',
             ),
             'input' => array(
-                array(
-                    'type' => 'select',
-                    'label' => $this->l('Filter customers by country'),
-                    'name' => 'REES46_CUSTOMER_COUNTRY',
-                    'options' => array(
-                        'query' => $countries,
-                        'id' => 'id',
-                        'name' => 'name',
-                    )
-                ),
                 array(
                     'type' => 'select',
                     'label' => $this->l('Customers type'),
@@ -460,89 +431,100 @@ class Rees46 extends Module
         return $helper->generateForm($fields_form);
     }
 
-    /*public function renderFormWebPush()
+    public function renderFormRecommendations()
     {
-        $fields_form[0]['form'] = array(
-            'action' => 'ajax.php',
-            'legend' => array(
-                'title' => $this->l('Web Push'),
-                'icon' => 'icon-envelope',
-            ),
-            'buttons' => array(
-                array(
-                    'title' => $this->l('Check Necessary Files'),
-                    'icon' => 'icon-refresh',
-                    'id' => 'submitStartCheck',
-                ),
-            ),
-        );
 
-        $helper = new HelperForm();
-        $helper->show_toolbar = false;
-        $helper->table = $this->table;
-        $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
-        $helper->default_form_language = $lang->id;
-        $helper->allow_employee_form_lang =
-            Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
-        $helper->identifier = $this->identifier;
-        $helper->submit_action = 'submit' . $this->name . 'WebPush';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            . '&configure=' . $this->name
-            . '&tab_module=' . $this->tab
-            . '&module_name=' . $this->name
-            . '&ajax=1';
-        $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->tpl_vars = array(
-            'fields_value' => array(),
-            'languages' => $this->context->controller->getLanguages(),
-            'id_language' => $this->context->language->id,
-        );
+    }
 
-        return $helper->generateForm($fields_form);
-    }*/
-
-    public function ajaxProcessCheckFiles()
-    {
+    public function ajaxProcessExportOrders() {
         $json = array();
 
-        $dir = _PS_ROOT_DIR_ . '/';
+        $next = (int)Tools::getValue('next');
+        $limit = 100;
 
-        $files = array(
-            'manifest.json',
-            'push_sw.js'
+        $filter_data = array(
+            'start' => ($next - 1) * $limit,
+            'limit' => $limit,
         );
 
-        foreach ($files as $key => $file) {
-            if (!is_file($dir . $file)) {
-                $ch = curl_init();
+        if ($filter_data['start'] < 0) {
+            $filter_data['start'] = 0;
+        }
 
-                curl_setopt($ch, CURLOPT_URL, 'https://raw.githubusercontent.com/rees46/web-push-files/master/' . $file);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $results_total = (int)$this->getTotalOrders();
 
-                $result = curl_exec($ch);
-                $info = curl_getinfo($ch);
+        $results = $this->getOrders($filter_data);
 
-                curl_close($ch);
+        $data = array();
 
-                if ($info['http_code'] < 200 || $info['http_code'] >= 300) {
-                    if (Configuration::get('REES46_LOG') == 1) {
-                        PrestaShopLogger::addLog('REES46 [error]: Not loading file ' . $file . ' [' . $info['http_code'] . ']', 3);
-                    }
+        if (!empty($results)) {
+            foreach ($results as $result) {
+                $order_products = array();
+
+                $products = $this->getOrderProducts($result['id_order']);
+
+                foreach ($products as $product) {
+                    $categories = array();
+
+                    $categories = Product::getProductCategories((int)$product['product_id']);
+
+                    $order_products[] = array(
+                        'id' => $product['product_id'],
+                        'price' => $product['total_price_tax_incl'],
+                        'categories' => $categories,
+                        'is_available' => $product['quantity'],
+                        'amount' => $product['product_quantity'],
+                    );
+                }
+
+                $data[] = array(
+                    'id' => $result['id_order'],
+                    'user_id' => $result['id_customer'],
+                    'user_email' => $result['email'],
+                    'date' => strtotime($result['date_add']),
+                    'items' => $order_products,
+                );
+            }
+
+            $params['shop_id'] = Configuration::get('REES46_STORE_ID');
+            $params['shop_secret'] = Configuration::get('REES46_SECRET_KEY');
+            $params['orders'] = $data;
+
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            curl_setopt($ch, CURLOPT_URL, 'http://api.rees46.com/import/orders');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, true));
+
+            $return['result'] = curl_exec($ch);
+            $return['info'] = curl_getinfo($ch);
+
+            curl_close($ch);
+
+            if ($return['info']['http_code'] < 200 || $return['info']['http_code'] >= 300) {
+                $json['error'] = 'Error: No data for export!';
+
+                if (Configuration::get('REES46_LOG_STATUS')) {
+                    PrestaShopLogger::addLog('REES46 [error]: Export orders (' . $return['info']['http_code'] . ')' . ' [' . time() . ']', 3);
+                }
+            } else {
+                if ($results_total > $next * $limit) {
+                    $json['next'] = $next + 1;
+
+                    $json['success'] = sprintf($this->l('Processing: You have exported %s of %s selected orders into REES46!'), $next * $limit, $results_total);
                 } else {
-                    file_put_contents($dir . $file, $result);
+                    $json['success'] = sprintf($this->l('Success: You have exported all %s selected orders into REES46!'), $results_total);
 
-                    if (Configuration::get('REES46_LOG') == 1) {
-                        PrestaShopLogger::addLog('REES46 [success]: Loading file ' . $file, 1);
+                    if (Configuration::get('REES46_LOG_STATUS')) {
+                        PrestaShopLogger::addLog('REES46 [success]: Export orders (' . $results_total . ')' . ' [' . time() . ']', 1);
                     }
                 }
             }
-
-            if (is_file($dir . $file)) {
-                $json['success'][$key] = sprintf($this->l('Success: File %s loaded!'), $file);
-            } else {
-                $json['error'][$key] = sprintf($this->l('Error: You need to load file %s!'), $file);
-            }
+        } else {
+            $json['error'] = 'Error: No data for export!';
         }
 
         echo (Tools::jsonEncode($json));
@@ -569,16 +551,14 @@ class Rees46 extends Module
 
         $data = array();
 
-        if ($results) {
+        if (!empty($results)) {
             foreach ($results as $result) {
                 $data[] = array(
                     'id' => $result['id_customer'],
                     'email' => $result['email'],
                 );
             }
-        }
 
-        if (!empty($data)) {
             $params['shop_id'] = Configuration::get('REES46_STORE_ID');
             $params['shop_secret'] = Configuration::get('REES46_SECRET_KEY');
             $params['audience'] = $data;
@@ -600,8 +580,8 @@ class Rees46 extends Module
             if ($return['info']['http_code'] < 200 || $return['info']['http_code'] >= 300) {
                 $json['error'] = 'Error: No data for export!';
 
-                if (Configuration::get('REES46_LOG') == 1) {
-                    PrestaShopLogger::addLog('REES46 [error]: Export customers [' . $return['info']['http_code'] . ']', 3);
+                if (Configuration::get('REES46_LOG_STATUS')) {
+                    PrestaShopLogger::addLog('REES46 [error]: Export customers (' . $return['info']['http_code'] . ')' . ' [' . time() . ']', 3);
                 }
             } else {
                 if ($results_total > $next * $limit) {
@@ -611,8 +591,8 @@ class Rees46 extends Module
                 } else {
                     $json['success'] = sprintf($this->l('Success: You have exported all %s selected customers into REES46!'), $results_total);
 
-                    if (Configuration::get('REES46_LOG') == 1) {
-                        PrestaShopLogger::addLog('REES46 [success]: Export customers [' . $results_total . ']', 1);
+                    if (Configuration::get('REES46_LOG_STATUS')) {
+                        PrestaShopLogger::addLog('REES46 [success]: Export customers (' . $results_total . ')' . ' [' . time() . ']', 1);
                     }
                 }
             }
@@ -623,13 +603,208 @@ class Rees46 extends Module
         echo (Tools::jsonEncode($json));
     }
 
+    public function ajaxProcessCheckFiles()
+    {
+        $json = array();
+
+        $dir = _PS_ROOT_DIR_ . '/';
+
+        $files = array(
+            'manifest.json',
+            'push_sw.js'
+        );
+
+        foreach ($files as $key => $file) {
+            if (!is_file($dir . $file)) {
+                $ch = curl_init();
+
+                curl_setopt($ch, CURLOPT_URL, 'https://raw.githubusercontent.com/rees46/web-push-files/master/' . $file);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                $result = curl_exec($ch);
+                $info = curl_getinfo($ch);
+
+                curl_close($ch);
+
+                if ($info['http_code'] < 200 || $info['http_code'] >= 300) {
+                    if (Configuration::get('REES46_LOG_STATUS')) {
+                        PrestaShopLogger::addLog('REES46 [error]: Not loading file ' . $file . ' (' . $info['http_code'] . ')' . ' [' . time() . ']', 3);
+                    }
+                } else {
+                    file_put_contents($dir . $file, $result);
+
+                    if (Configuration::get('REES46_LOG_STATUS')) {
+                        PrestaShopLogger::addLog('REES46 [success]: Loading file ' . $file . ' [' . time() . ']', 1);
+                    }
+                }
+            }
+
+            if (is_file($dir . $file)) {
+                $json['success'][$key] = sprintf($this->l('Success: File %s loaded!'), $file);
+            } else {
+                $json['error'][$key] = sprintf($this->l('Error: You need to load file %s!'), $file);
+            }
+        }
+
+        echo (Tools::jsonEncode($json));
+    }
+
+    private function getTotalOrders()
+    {
+        $query = new DbQuery();
+        $query->select('COUNT(*) AS total');
+        $query->from('orders', 'o');
+        $query->where('DATE(o.`date_add`) > DATE_SUB(NOW(), INTERVAL 6 MONTH)');
+
+        if (Context::getContext()->cookie->shopContext) {
+            $query->where('o.`id_shop` = ' . (int)Context::getContext()->shop->id);
+        }
+
+        $rees46_statuses = array();
+
+        $rees46_order_created = Tools::jsonDecode(Configuration::get('REES46_ORDER_CREATED'));
+        $rees46_order_completed = Tools::jsonDecode(Configuration::get('REES46_ORDER_COMPLETED'));
+        $rees46_order_cancelled = Tools::jsonDecode(Configuration::get('REES46_ORDER_CANCELLED'));
+
+        if ($rees46_order_created) {
+            $rees46_statuses = array_merge($rees46_statuses, $rees46_order_created);
+        }
+
+        if ($rees46_order_completed) {
+            $rees46_statuses = array_merge($rees46_statuses, $rees46_order_completed);
+        }
+
+        if ($rees46_order_cancelled) {
+            $rees46_statuses = array_merge($rees46_statuses, $rees46_order_cancelled);
+        }
+
+        $rees46_statuses = array_unique($rees46_statuses);
+
+        if (!empty($rees46_statuses)) {
+            $implode = array();
+
+            foreach ($rees46_statuses as $order_status_id) {
+                $implode[] = "o.`current_state` = '" . (int)$order_status_id . "'";
+            }
+
+            if ($implode) {
+                $query->where(implode(' OR ', $implode));
+            }
+
+            $query->orderBy('o.`id_order` ASC');
+
+            $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
+
+            return $result[0]['total'];
+        }
+    }
+
+    private function getOrders($data = array())
+    {
+        $query = new DbQuery();
+        $query->select('o.`id_order`, o.`id_customer`, c.`email`, o.`current_state`, o.`date_add`');
+        $query->from('orders', 'o');
+        $query->leftJoin('customer', 'c', 'c.`id_customer` = o.`id_customer`');
+        $query->where('DATE(o.`date_add`) > DATE_SUB(NOW(), INTERVAL 6 MONTH)');
+
+        if (Context::getContext()->cookie->shopContext) {
+            $query->where('o.`id_shop` = ' . (int)Context::getContext()->shop->id);
+        }
+
+        $rees46_statuses = array();
+
+        $rees46_order_created = Tools::jsonDecode(Configuration::get('REES46_ORDER_CREATED'));
+        $rees46_order_completed = Tools::jsonDecode(Configuration::get('REES46_ORDER_COMPLETED'));
+        $rees46_order_cancelled = Tools::jsonDecode(Configuration::get('REES46_ORDER_CANCELLED'));
+
+        if ($rees46_order_created) {
+            $rees46_statuses = array_merge($rees46_statuses, $rees46_order_created);
+        }
+
+        if ($rees46_order_completed) {
+            $rees46_statuses = array_merge($rees46_statuses, $rees46_order_completed);
+        }
+
+        if ($rees46_order_cancelled) {
+            $rees46_statuses = array_merge($rees46_statuses, $rees46_order_cancelled);
+        }
+
+        $rees46_statuses = array_unique($rees46_statuses);
+
+        if (!empty($rees46_statuses)) {
+            $implode = array();
+
+            foreach ($rees46_statuses as $order_status_id) {
+                $implode[] = "o.`current_state` = '" . (int)$order_status_id . "'";
+            }
+
+            if ($implode) {
+                $query->where(implode(' OR ', $implode));
+            }
+
+            $query->orderBy('o.`id_order` ASC');
+
+            if (isset($data['start']) || isset($data['limit'])) {
+                if ($data['start'] < 0) {
+                    $data['start'] = 0;
+                }
+
+                if ($data['limit'] < 1) {
+                    $data['limit'] = 20;
+                }
+
+                $query->limit((int)$data['start'], (int)$data['limit']);
+            }
+
+            return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
+        }
+    }
+
+    private function getOrderProducts($id_order)
+    {
+        $query = new DbQuery();
+        $query->select('od.`product_id`, od.`total_price_tax_incl`, od.`product_quantity`, sa.`quantity`');
+        $query->from('order_detail', 'od');
+        $query->leftJoin('product_shop', 'ps', 'ps.`id_product` = od.`product_id`');
+        $query->leftJoin('stock_available', 'sa', 'sa.`id_product` = od.`product_id`');
+        $query->where('od.`id_order` = ' . (int)$id_order);
+        $query->where('ps.`id_shop` = od.`id_shop`');
+        $query->where('sa.`id_product_attribute` = od.`product_attribute_id`');
+
+        if (Context::getContext()->cookie->shopContext) {
+            $query->where('od.`id_shop` = ' . (int)Context::getContext()->shop->id);
+        }
+
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
+    }
+
+    private function getTotalCustomers()
+    {
+        $query = new DbQuery();
+        $query->select('COUNT(*) AS total');
+        $query->from('customer', 'c');
+
+        if (Configuration::get('REES46_CUSTOMER_TYPE')) {
+            $query->where('c.`optin` = ' . (int)Configuration::get('REES46_CUSTOMER_TYPE'));
+        }
+
+        if (Context::getContext()->cookie->shopContext) {
+            $query->where('c.`id_shop` = ' . (int)Context::getContext()->shop->id);
+        }
+
+        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
+
+        return $result[0]['total'];
+    }
+
     private function getCustomers($data = array())
     {
         $query = new DbQuery();
         $query->select('c.`id_customer`, c.`email`');
         $query->from('customer', 'c');
 
-        if (Configuration::get('REES46_CUSTOMER_TYPE') == 1) {
+        if (Configuration::get('REES46_CUSTOMER_TYPE')) {
             $query->where('c.`optin` = ' . (int)Configuration::get('REES46_CUSTOMER_TYPE'));
         }
 
@@ -650,24 +825,5 @@ class Rees46 extends Module
         }
 
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
-    }
-
-    private function getTotalCustomers()
-    {
-        $query = new DbQuery();
-        $query->select('COUNT(*) AS total');
-        $query->from('customer', 'c');
-
-        if (Configuration::get('REES46_CUSTOMER_TYPE') == 1) {
-            $query->where('c.`optin` = ' . (int)Configuration::get('REES46_CUSTOMER_TYPE'));
-        }
-
-        if (Context::getContext()->cookie->shopContext) {
-            $query->where('c.`id_shop` = ' . (int)Context::getContext()->shop->id);
-        }
-
-        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query->build());
-
-        return $result[0]['total'];
     }
 }
