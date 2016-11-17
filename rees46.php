@@ -43,6 +43,10 @@ class Rees46 extends Module
         'REES46_CUSTOMER_TYPE',
     );
 
+    protected static $hooks = array(
+        'header',
+    );
+
     public function __construct()
     {
         $this->name = 'rees46';
@@ -64,11 +68,7 @@ class Rees46 extends Module
 
     public function install()
     {
-        if (parent::install()) {
-            foreach (Rees46::$fields as $field) {
-                Configuration::updateValue($field, '');
-            }
-
+        if (parent::install() && $this->updateFields() && $this->registerHooks()) {
             return true;
         } else {
             return false;
@@ -77,15 +77,152 @@ class Rees46 extends Module
 
     public function uninstall()
     {
-        if (parent::uninstall()) {
-            foreach (Rees46::$fields as $field) {
-                Configuration::deleteByName($field);
-            }
-
+        if (parent::uninstall() && $this->deleteFields() && $this->unregisterHooks()) {
             return true;
         } else {
             return false;
         }
+    }
+
+    private function updateFields()
+    {
+        foreach (Rees46::$fields as $field) {
+            if (!Configuration::updateValue($field, '')) {
+                $this->_errors[] = Tools::displayError('Failed to update value: ' . $field . '.');
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function deleteFields()
+    {
+        foreach (Rees46::$fields as $field) {
+            if (!Configuration::deleteByName($field)) {
+                $this->_errors[] = Tools::displayError('Failed to delete value: ' . $field . '.');
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function registerHooks()
+    {
+        foreach (Rees46::$hooks as $hook) {
+            if (!$this->registerHook($hook)) {
+                $this->_errors[] = Tools::displayError('Failed to install hook: ' . $hook . '.');
+
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    private function unregisterHooks()
+    {
+        foreach (Rees46::$hooks as $hook) {
+            if (!$this->unregisterHook($hook)) {
+                $this->_errors[] = Tools::displayError('Failed to uninstall hook: ' . $hook . '.');
+
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    public function hookDisplayHeader()
+    {
+        $this->context->smarty->assign(
+            array(
+                'store_id' => Configuration::get('REES46_STORE_ID'),
+            )
+        );
+
+        if ($this->context->customer->isLogged()) {
+            if ($this->context->customer->id_gender) {
+                $gender_type = $this->checkGender($this->context->customer->id_gender);
+
+                if ($gender_type) {
+                    $customer_gender = 'f';
+                } else {
+                    $customer_gender = 'm';
+                }
+            } else {
+                $customer_gender = null;
+            }
+
+            if ($this->context->customer->birthday != '0000-00-00') {
+                $customer_birthday = $this->context->customer->birthday;
+            } else {
+                $customer_birthday = null;
+            }
+
+            $this->context->smarty->assign(
+                array(
+                    'customer_id' => (int)$this->context->customer->id,
+                    'customer_email' => $this->context->customer->email,
+                    'customer_gender' => $customer_gender,
+                    'customer_birthday' => $customer_birthday,
+                )
+            );
+        } elseif ($this->context->cookie->email) {
+            $this->context->smarty->assign(
+                array(
+                    'guest_email' => $this->context->cookie->email,
+                )
+            );
+        }
+
+        if (Tools::getValue('id_product')) {
+            $product = new Product(
+                (int)Tools::getValue('id_product'), 
+                true, 
+                $this->context->language->id, 
+                $this->context->shop->id
+            );
+
+            $image = Product::getCover($product->id);
+
+            $this->context->smarty->assign(
+                array(
+                    'product_id' => $product->id,
+                    'product_stock' => $product->quantity,
+                    'product_price' => $product->getPrice(!Tax::excludeTaxeOption()),
+                    'product_name' => $product->name,
+                    'product_categories' => Tools::jsonEncode($product->getCategories()),
+                    'product_image' => $this->context->link->getImageLink($product->link_rewrite[$this->context->language->id], $image['id_image'], 'home_default'),
+                    'product_url' => $this->context->link->getProductLink($product->id),
+                )
+            );
+        }
+
+//var_dump($this->context->cookie->id_cart);
+//var_dump($this->context->cart->getProducts());
+        /*
+        if ($id_cart = (int)$this->context->cookie->id_cart)
+        {
+            $cart = new Cart($id_cart);
+            $products = $cart->getProducts();
+            $p_ids = array();
+            foreach ($products as $prod)
+                $p_ids[] = $prod['id_product'];
+            $this->context->smarty->assign(array(
+                'items_in_cart_ids' => $p_ids
+            ));
+        }
+        else
+            $this->context->smarty->assign(array(
+                'items_in_cart_ids' => array()
+            ));
+        */
+
+        return $this->display(__FILE__, 'views/templates/hook/header.tpl');
     }
 
     public function getContent()
@@ -418,11 +555,16 @@ class Rees46 extends Module
 
         foreach (Rees46::$fields as $field) {
             if ('REES46_ORDER' == substr($field, 0, 12)) {
-                foreach (OrderState::getOrderStates((int)$this->context->language->id) as $order_status) {
-                    $helper->tpl_vars['fields_value'][$field . '[]_' . $order_status['id_order_state']] =
-                        in_array($order_status['id_order_state'],
-                        Tools::jsonDecode(Configuration::get($field), true)) ? true : false;
+                if (is_array($field)) {
+                    foreach (OrderState::getOrderStates((int)$this->context->language->id) as $order_status) {
+                        $helper->tpl_vars['fields_value'][$field . '[]_' . $order_status['id_order_state']] =
+                            in_array($order_status['id_order_state'],
+                            Tools::jsonDecode(Configuration::get($field), true)) ? true : false;
+                    }
+                } else {
+                    $helper->tpl_vars['fields_value'][$field] = array();
                 }
+
             } else {
                 $helper->tpl_vars['fields_value'][$field] = Configuration::get($field);
             }

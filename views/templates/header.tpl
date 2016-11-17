@@ -1,5 +1,4 @@
-<?php
-/**
+{*
  * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
@@ -22,14 +21,18 @@
  *  @copyright 2007-2016 PrestaShop SA
  *  @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  *  International Registered Trademark & Property of PrestaShop SA
- */
+ *}
 
-header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
-
-header('Cache-Control: no-store, no-cache, must-revalidate');
-header('Cache-Control: post-check=0, pre-check=0', false);
-header('Pragma: no-cache');
-
-header('Location: ../');
-exit;
+<script type="text/javascript">
+(function(r){ window.r46=window.r46||function(){ (r46.q=r46.q||[]).push(arguments) };var s=document.getElementsByTagName(r)[0],rs=document.createElement(r);rs.async=1;rs.src='//cdn.rees46.com/v3.js';s.parentNode.insertBefore(rs,s); })('script');
+r46('init', '{$store_id}');
+{if isset($customer_id)}
+r46('profile', 'set', { id: '{$customer_id}', email: '{$customer_email}', gender: '{$customer_gender}', birthday: '{$customer_birthday}' });
+{/if}
+{if isset($guest_email)}
+r46('profile', 'set', { email: '{$guest_email}' });
+{/if}
+{if isset($product_id)}
+r46('track', 'view', { id: '{$product_id}', stock: '{$product_stock}', price: '{$product_price}', name: '{$product_name}', categories: {$product_categories}, image: '{$product_image}', url: '{$product_url}' });
+{/if}
+</script>
