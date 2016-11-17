@@ -146,9 +146,9 @@ class Rees46 extends Module
 
         if ($this->context->customer->isLogged()) {
             if ($this->context->customer->id_gender) {
-                $gender_type = $this->checkGender($this->context->customer->id_gender);
+                $gender = new Gender((int)$this->context->customer->id_gender, $this->context->language->id);
 
-                if ($gender_type) {
+                if ($gender->type) {
                     $customer_gender = 'f';
                 } else {
                     $customer_gender = 'm';
