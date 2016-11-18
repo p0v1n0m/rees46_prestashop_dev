@@ -202,26 +202,6 @@ class Rees46 extends Module
             );
         }
 
-//var_dump($this->context->cookie->id_cart);
-//var_dump($this->context->cart->getProducts());
-        /*
-        if ($id_cart = (int)$this->context->cookie->id_cart)
-        {
-            $cart = new Cart($id_cart);
-            $products = $cart->getProducts();
-            $p_ids = array();
-            foreach ($products as $prod)
-                $p_ids[] = $prod['id_product'];
-            $this->context->smarty->assign(array(
-                'items_in_cart_ids' => $p_ids
-            ));
-        }
-        else
-            $this->context->smarty->assign(array(
-                'items_in_cart_ids' => array()
-            ));
-        */
-
         return $this->display(__FILE__, 'views/templates/hook/header.tpl');
     }
 
@@ -639,7 +619,7 @@ class Rees46 extends Module
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
             curl_setopt($ch, CURLOPT_URL, 'http://api.rees46.com/import/orders');
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, true));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, Tools::jsonEncode($params));
 
             $return['result'] = curl_exec($ch);
             $return['info'] = curl_getinfo($ch);
@@ -712,7 +692,7 @@ class Rees46 extends Module
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
             curl_setopt($ch, CURLOPT_URL, 'http://api.rees46.com/import/audience');
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params, true));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, Tools::jsonEncode($params));
 
             $return['result'] = curl_exec($ch);
             $return['info'] = curl_getinfo($ch);
