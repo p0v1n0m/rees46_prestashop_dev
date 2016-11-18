@@ -50,38 +50,7 @@ r46('track', 'view', {
 	url: '{$product_url}',
 });
 {/if}
-$(document).ajaxComplete(function(e, xhr, settings) {
-	var url = settings.data.split('&');
-
-	if (url[0] == 'controller=cart') {
-		var product_id, quantity, method_add, method_delete;
-
-		url.forEach(function(pair) {
-			var parts = pair.split('=');
-
-			if (parts[0] == 'id_product') {
-				product_id = parts[1];
-			}
-
-			if (parts[0] == 'qty') {
-				quantity = parts[1];
-			}
-
-			if (parts[0] == 'add') {
-				method_add = parts[1];
-			} else if (parts[0] == 'delete') {
-				method_delete = parts[1];
-			}
-		});
-
-		if (method_add) {
-			r46('track', 'cart', {
-				id: product_id,
-				amount: quantity,
-			});
-		} else if (method_delete) {
-			r46('track', 'remove_from_cart', product_id);
-		}
-	}
-});
+{if isset($rees46_cart)}
+{$rees46_cart}
+{/if}
 </script>

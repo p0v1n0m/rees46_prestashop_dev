@@ -45,6 +45,8 @@ class Rees46 extends Module
 
     protected static $hooks = array(
         'header',
+        'actionCartSave',
+        'actionValidateOrder',
     );
 
     public function __construct()
@@ -118,9 +120,9 @@ class Rees46 extends Module
 
                 return false;
             }
-
-            return true;
         }
+
+        return true;
     }
 
     private function unregisterHooks()
@@ -131,78 +133,143 @@ class Rees46 extends Module
 
                 return false;
             }
+        }
 
-            return true;
+        return true;
+    }
+
+    public function hookHeader()
+    {
+        if (Configuration::get('REES46_STORE_ID') != '') {
+            $this->context->smarty->assign(
+                array(
+                    'store_id' => Configuration::get('REES46_STORE_ID'),
+                )
+            );
+
+            if ($this->context->customer->isLogged()) {
+                if ($this->context->customer->id_gender) {
+                    $gender = new Gender((int)$this->context->customer->id_gender, $this->context->language->id);
+
+                    if ($gender->type) {
+                        $customer_gender = 'f';
+                    } else {
+                        $customer_gender = 'm';
+                    }
+                } else {
+                    $customer_gender = null;
+                }
+
+                if ($this->context->customer->birthday != '0000-00-00') {
+                    $customer_birthday = $this->context->customer->birthday;
+                } else {
+                    $customer_birthday = null;
+                }
+
+                $this->context->smarty->assign(
+                    array(
+                        'customer_id' => (int)$this->context->customer->id,
+                        'customer_email' => $this->context->customer->email,
+                        'customer_gender' => $customer_gender,
+                        'customer_birthday' => $customer_birthday,
+                    )
+                );
+            } elseif ($this->context->cookie->email) {
+                $this->context->smarty->assign(
+                    array(
+                        'guest_email' => $this->context->cookie->email,
+                    )
+                );
+            }
+
+            if (Tools::getValue('id_product')) {
+                $product = new Product(
+                    (int)Tools::getValue('id_product'), 
+                    true, 
+                    $this->context->language->id, 
+                    $this->context->shop->id
+                );
+
+                $image = Product::getCover($product->id);
+
+                $this->context->smarty->assign(
+                    array(
+                        'product_id' => $product->id,
+                        'product_stock' => $product->quantity,
+                        'product_price' => $product->getPrice(!Tax::excludeTaxeOption()),
+                        'product_name' => $product->name,
+                        'product_categories' => Tools::jsonEncode($product->getCategories()),
+                        'product_image' => $this->context->link->getImageLink(
+                            $product->link_rewrite[$this->context->language->id],
+                            $image['id_image'],
+                            'home_default'
+                        ),
+                        'product_url' => $this->context->link->getProductLink($product->id),
+                    )
+                );
+            }
+
+            if (isset($this->context->cookie->rees46_cart)) {
+                $this->context->smarty->assign(
+                    array(
+                        'rees46_cart' => $this->context->cookie->rees46_cart,
+                    )
+                );
+
+                unset($this->context->cookie->rees46_cart);
+            }
+
+            return $this->display(__FILE__, 'views/templates/hook/header.tpl');
         }
     }
 
-    public function hookDisplayHeader()
+    public function hookActionCartSave()
     {
-        $this->context->smarty->assign(
-            array(
-                'store_id' => Configuration::get('REES46_STORE_ID'),
-            )
-        );
+        if (isset($this->context->cart) && Configuration::get('REES46_STORE_ID') != '') {
+            $js = '';
+            $product_id = Tools::getValue('id_product');
+            $quantity = Tools::getValue('qty');
+            $add = Tools::getValue('add');
+            $delete = Tools::getValue('delete');
+            $op = Tools::getValue('op');
 
-        if ($this->context->customer->isLogged()) {
-            if ($this->context->customer->id_gender) {
-                $gender = new Gender((int)$this->context->customer->id_gender, $this->context->language->id);
-
-                if ($gender->type) {
-                    $customer_gender = 'f';
-                } else {
-                    $customer_gender = 'm';
+            if ($op && $op == 'down' && $product_id) {
+                foreach ($this->context->cart->getProducts() as $product) {
+                    $cart[] = array(
+                        'id' => $product['id_product'],
+                        'amount' => $product['quantity'],
+                    );
                 }
-            } else {
-                $customer_gender = null;
+
+                $js .= 'r46(\'track\', \'cart\', ' . Tools::jsonEncode($cart) . ');';
+            } elseif ($add && $product_id && $quantity) {
+                $js .= 'r46(\'track\', \'cart\', {id: ' . $product_id . ', amount: ' . $quantity . '});';
+            } elseif ($delete && $product_id) {
+                $js .= 'r46(\'track\', \'remove_from_cart\', ' . $product_id . ');';
             }
 
-            if ($this->context->customer->birthday != '0000-00-00') {
-                $customer_birthday = $this->context->customer->birthday;
-            } else {
-                $customer_birthday = null;
+            $this->context->cookie->__set('rees46_cart', $this->context->cookie->rees46_cart . $js);
+        }
+    }
+
+    public function hookActionValidateOrder($params)
+    {
+        if (Configuration::get('REES46_STORE_ID') != '') {
+            $data['order'] = $params['order']->id;
+            $data['order_price'] = $params['order']->total_paid;
+
+            foreach ($params['order']->product_list as $product) {
+                $data['products'][] = array(
+                    'id' => $product['id_product'],
+                    'price' => $product['price'],
+                    'amount' => $product['cart_quantity'],
+                );
             }
 
-            $this->context->smarty->assign(
-                array(
-                    'customer_id' => (int)$this->context->customer->id,
-                    'customer_email' => $this->context->customer->email,
-                    'customer_gender' => $customer_gender,
-                    'customer_birthday' => $customer_birthday,
-                )
-            );
-        } elseif ($this->context->cookie->email) {
-            $this->context->smarty->assign(
-                array(
-                    'guest_email' => $this->context->cookie->email,
-                )
-            );
+            $js = 'r46(\'track\', \'purchase\', ' . Tools::jsonEncode($data) . ');';
+
+            $this->context->cookie->__set('rees46_cart', $this->context->cookie->rees46_cart . $js);
         }
-
-        if (Tools::getValue('id_product')) {
-            $product = new Product(
-                (int)Tools::getValue('id_product'), 
-                true, 
-                $this->context->language->id, 
-                $this->context->shop->id
-            );
-
-            $image = Product::getCover($product->id);
-
-            $this->context->smarty->assign(
-                array(
-                    'product_id' => $product->id,
-                    'product_stock' => $product->quantity,
-                    'product_price' => $product->getPrice(!Tax::excludeTaxeOption()),
-                    'product_name' => $product->name,
-                    'product_categories' => Tools::jsonEncode($product->getCategories()),
-                    'product_image' => $this->context->link->getImageLink($product->link_rewrite[$this->context->language->id], $image['id_image'], 'home_default'),
-                    'product_url' => $this->context->link->getProductLink($product->id),
-                )
-            );
-        }
-
-        return $this->display(__FILE__, 'views/templates/hook/header.tpl');
     }
 
     public function getContent()
@@ -212,46 +279,13 @@ class Rees46 extends Module
         $output = null;
 
         if (Tools::isSubmit('submit' . $this->name)) {
-            Configuration::updateValue(
-                'REES46_STORE_ID',
-                Tools::getValue('REES46_STORE_ID')
-            );
-            Configuration::updateValue(
-                'REES46_SECRET_KEY',
-                Tools::getValue('REES46_SECRET_KEY')
-            );
-            Configuration::updateValue(
-                'REES46_LOG_STATUS',
-                Tools::getValue('REES46_LOG_STATUS')
-            );
-            Configuration::updateValue(
-                'REES46_XML_STATUS',
-                Tools::getValue('REES46_XML_STATUS')
-            );
-            Configuration::updateValue(
-                'REES46_XML_CURRENCY',
-                Tools::getValue('REES46_XML_CURRENCY')
-            );
-            Configuration::updateValue(
-                'REES46_XML_URL',
-                'https://rees46.com'
-            );
-            Configuration::updateValue(
-                'REES46_ORDER_CREATED',
-                Tools::jsonEncode(Tools::getValue('REES46_ORDER_CREATED'))
-            );
-            Configuration::updateValue(
-                'REES46_ORDER_COMPLETED',
-                Tools::jsonEncode(Tools::getValue('REES46_ORDER_COMPLETED'))
-            );
-            Configuration::updateValue(
-                'REES46_ORDER_CANCELLED',
-                Tools::jsonEncode(Tools::getValue('REES46_ORDER_CANCELLED'))
-            );
-            Configuration::updateValue(
-                'REES46_CUSTOMER_TYPE',
-                Tools::getValue('REES46_CUSTOMER_TYPE')
-            );
+            foreach (Rees46::$fields as $field) {
+                if ('REES46_ORDER' == substr($field, 0, 12)) {
+                    Configuration::updateValue($field, Tools::jsonEncode(Tools::getValue($field)));
+                } else {
+                    Configuration::updateValue($field, Tools::getValue($field));
+                }
+            }
 
             $output .= $this->displayConfirmation($this->l('Settings updated'));
         }
@@ -535,16 +569,15 @@ class Rees46 extends Module
 
         foreach (Rees46::$fields as $field) {
             if ('REES46_ORDER' == substr($field, 0, 12)) {
-                if (is_array($field)) {
+                if (is_array(Tools::jsonDecode(Configuration::get($field)))) {
                     foreach (OrderState::getOrderStates((int)$this->context->language->id) as $order_status) {
                         $helper->tpl_vars['fields_value'][$field . '[]_' . $order_status['id_order_state']] =
                             in_array($order_status['id_order_state'],
-                            Tools::jsonDecode(Configuration::get($field), true)) ? true : false;
+                            Tools::jsonDecode(Configuration::get($field))) ? true : false;
                     }
                 } else {
                     $helper->tpl_vars['fields_value'][$field] = array();
                 }
-
             } else {
                 $helper->tpl_vars['fields_value'][$field] = Configuration::get($field);
             }
@@ -636,9 +669,16 @@ class Rees46 extends Module
                 if ($results_total > $next * $limit) {
                     $json['next'] = $next + 1;
 
-                    $json['success'] = sprintf($this->l('Processing: You have exported %s of %s selected orders into REES46!'), $next * $limit, $results_total);
+                    $json['success'] = sprintf(
+                        $this->l('Processing: You have exported %s of %s selected orders into REES46!'),
+                        $next * $limit,
+                        $results_total
+                    );
                 } else {
-                    $json['success'] = sprintf($this->l('Success: You have exported all %s selected orders into REES46!'), $results_total);
+                    $json['success'] = sprintf(
+                        $this->l('Success: You have exported all %s selected orders into REES46!'),
+                        $results_total
+                    );
 
                     if (Configuration::get('REES46_LOG_STATUS')) {
                         PrestaShopLogger::addLog('REES46 [success]: Export orders (' . $results_total . ')' . ' [' . time() . ']', 1);
@@ -709,9 +749,16 @@ class Rees46 extends Module
                 if ($results_total > $next * $limit) {
                     $json['next'] = $next + 1;
 
-                    $json['success'] = sprintf($this->l('Processing: You have exported %s of %s selected customers into REES46!'), $next * $limit, $results_total);
+                    $json['success'] = sprintf(
+                        $this->l('Processing: You have exported %s of %s selected customers into REES46!'),
+                        $next * $limit,
+                        $results_total
+                    );
                 } else {
-                    $json['success'] = sprintf($this->l('Success: You have exported all %s selected customers into REES46!'), $results_total);
+                    $json['success'] = sprintf(
+                        $this->l('Success: You have exported all %s selected customers into REES46!'),
+                        $results_total
+                    );
 
                     if (Configuration::get('REES46_LOG_STATUS')) {
                         PrestaShopLogger::addLog('REES46 [success]: Export customers (' . $results_total . ')' . ' [' . time() . ']', 1);
