@@ -23,34 +23,18 @@
  *  International Registered Trademark & Property of PrestaShop SA
  *}
 
+{foreach $rees46_modules as $module}
+<!-- REES46 Recommendation Module {$module.id_module} -->
 <script type="text/javascript">
-(function(r){ window.r46=window.r46||function(){ (r46.q=r46.q||[]).push(arguments) };var s=document.getElementsByTagName(r)[0],rs=document.createElement(r);rs.async=1;rs.src='//cdn.rees46.com/v3.js';s.parentNode.insertBefore(rs,s); })('script');
-r46('init', '{$store_id}');
-{if isset($customer_id)}
-r46('profile', 'set', {
-	id: '{$customer_id}',
-	email: '{$customer_email}',
-	gender: '{$customer_gender}',
-	birthday: '{$customer_birthday}',
+{if {$rees46_css}}
+r46('add_css', 'recommendations');
+{/if}
+r46('recommend', '{$module.type}', {$module.params}, function(results) {
+  if (results.length > 0) {
+  	$('#rees46-recommended-{$module.id_module}').load('index.php?fc=module&module=rees46&controller=recommendations&ajax=1&module_id={$module.id_module}&product_ids=' + results);
+  }
 });
-{/if}
-{if isset($guest_email)}
-r46('profile', 'set', {
-	email: '{$guest_email}',
-});
-{/if}
-{if isset($product_id)}
-r46('track', 'view', {
-	id: '{$product_id}',
-	stock: '{$product_stock}',
-	price: '{$product_price}',
-	name: '{$product_name}',
-	categories: '{$product_categories}',
-	image: '{$product_image}',
-	url: '{$product_url}',
-});
-{/if}
-{if isset($rees46_cart)}
-{$rees46_cart}
-{/if}
 </script>
+<div id="rees46-recommended-{$module.id_module}"></div>
+<!-- /REES46 Recommendation Module {$module.id_module} -->
+{/foreach}
