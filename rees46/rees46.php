@@ -49,7 +49,6 @@ class Rees46 extends Module
         'actionValidateOrder',
         'actionOrderStatusPostUpdate',
         'displayHome',
-        'displayTopColumn',
         'displayLeftColumn',
         'displayRightColumn',
         'displayFooterProduct',
@@ -174,6 +173,7 @@ class Rees46 extends Module
     {
         if (Configuration::get('REES46_STORE_KEY') != ''
             && Configuration::get('REES46_SECRET_KEY') != ''
+            && $_SERVER['REQUEST_METHOD'] != 'POST'
         ) {
             $js = '<script type="text/javascript">';
             $js .= '(function(r){window.r46=window.r46||function(){(r46.q=r46.q||[]).push(arguments)};var s=document.getElementsByTagName(r)[0],rs=document.createElement(r);rs.async=1;rs.src=\'//cdn.rees46.com/v3.js\';s.parentNode.insertBefore(rs,s);})(\'script\');' . "\n";
@@ -269,6 +269,8 @@ class Rees46 extends Module
     public function hookActionCartSave()
     {
         if (isset($this->context->cart)
+            && Tools::getValue('action') != 'productrefresh'
+            && Tools::getValue('id_product') == true
             && Configuration::get('REES46_STORE_KEY') != ''
             && Configuration::get('REES46_SECRET_KEY') != ''
         ) {
@@ -279,7 +281,9 @@ class Rees46 extends Module
             $delete = Tools::getValue('delete');
             $op = Tools::getValue('op');
 
-            if ($op && $op == 'down' && $product_id) {
+            if ($op && $op == 'up' && $product_id) {
+                $js .= 'r46(\'track\', \'cart\', {id: ' . $product_id . ', amount: 1});' . "\n";
+            } elseif ($op && $op == 'down' && $product_id) {
                 foreach ($this->context->cart->getProducts() as $product) {
                     $cart[] = array(
                         'id' => $product['id_product'],
@@ -294,7 +298,9 @@ class Rees46 extends Module
                 $js .= 'r46(\'track\', \'remove_from_cart\', ' . $product_id . ');' . "\n";
             }
 
-            $this->context->cookie->__set('rees46_cart', $this->context->cookie->rees46_cart . $js);
+            if ($js != '') {
+                $this->context->cookie->__set('rees46_cart', $this->context->cookie->rees46_cart . $js);
+            }
         }
     }
 
@@ -343,7 +349,7 @@ class Rees46 extends Module
 
                     $order_products[] = array(
                         'id' => $order_product['id_product'],
-                        'price' => $product->getPrice(!Tax::excludeTaxeOption()),
+                        'price' => Product::getPriceStatic((int)$order_product['id_product'], true, ($order_product['id_product_attribute'] ? (int)$order_product['id_product_attribute'] : null), 2, null, false, true, 1, false, (int)$params['order']->id_customer, (int)$params['order']->id_cart, (int)$params['order']->{Configuration::get('PS_TAX_ADDRESS_TYPE')}),
                         'categories' => $product->getCategories(),
                         'is_available' => $order_product['in_stock'],
                         'amount' => $order_product['cart_quantity'],
@@ -449,11 +455,6 @@ class Rees46 extends Module
     public function hookDisplayHome($params)
     {
         return $this->getModules('displayHome');
-    }
-
-    public function hookDisplayTopColumn($params)
-    {
-        return $this->getModules('displayTopColumn');
     }
 
     public function hookDisplayLeftColumn($params)
@@ -1274,10 +1275,6 @@ class Rees46 extends Module
                             array(
                                 'id' => 'displayHome',
                                 'name' => 'displayHome',
-                            ),
-                            array(
-                                'id' => 'displayTopColumn',
-                                'name' => 'displayTopColumn',
                             ),
                             array(
                                 'id' => 'displayLeftColumn',
