@@ -779,7 +779,7 @@ class Rees46 extends Module
                 if (version_compare(_PS_VERSION_, '1.6', '<')) {
                     $dir = '15/';
                 } elseif (version_compare(_PS_VERSION_, '1.7', '<')) {
-                    $dir = '15/';
+                    $dir = '16/';
                 } else {
                     $dir = '';
                 }
