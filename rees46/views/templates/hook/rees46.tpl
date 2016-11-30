@@ -23,18 +23,18 @@
  *  International Registered Trademark & Property of PrestaShop SA
  *}
 
-{foreach $rees46_modules as $module}
+{foreach from=$rees46_modules item=module}
 <!-- REES46 Recommendation Module {$module.id_module} -->
 <script type="text/javascript">
 {if {$rees46_css}}
 r46('add_css', 'recommendations');
 {/if}
-r46('recommend', '{$module.type}', {$module.params}, function(results) {
+r46('recommend', '{$module.type}', {$module.params|@json_encode nofilter}, function(results) {
   if (results.length > 0) {
-  	$('#rees46-recommended-{$module.id_module}').load('index.php?fc=module&module=rees46&controller=recommendations&ajax=1&module_id={$module.id_module}&product_ids=' + results);
+    $('#rees46-recommended-{$module.id_module}').load('{$module.link}?fc=module&ajax=1&module_id={$module.id_module}&product_ids=' + results);
   }
 });
 </script>
-<div id="rees46-recommended-{$module.id_module}"></div>
+<div id="rees46-recommended-{$module.id_module}" class="clearfix"></div>
 <!-- /REES46 Recommendation Module {$module.id_module} -->
 {/foreach}

@@ -24,25 +24,36 @@
  */
 
 $(document).ready(function() {
-	$('#submitCheckFiles').click(function() {
+	$('#desc-module-preview').click(function() {
 		checkFiles();
 	});
 
-	$('#submitExportOrders').click(function() {
+	$('#desc-module-new').click(function() {
 		exportData('orders');
 	});
 
-	$('#submitExportCustomers').click(function() {
+	$('#desc-module-newAttributes').click(function() {
 		exportData('customers');
 	});
 });
 
 function exportData(type, next = 1) {
+	var rees46_token;
+
+	$('#module_form').attr('action').split('&').forEach(function(pair) {
+		var parts = pair.split('=');
+
+		if (parts[0] == 'token') {
+			rees46_token = parts[1];
+		}
+	});
+
 	$.ajax({
-		url: admin_modules_link,
+		url: module_dir + 'rees46/old_ajax.php',
 		data: {
-			ajax: true,
-			configure: 'rees46',
+			ajax: 1,
+			token: rees46_token,
+			action: 'checkFiles',
 			action: 'export' + type,
 			type: type,
 			next: next,
@@ -50,51 +61,57 @@ function exportData(type, next = 1) {
 		type: 'post',
 		dataType: 'json',
 		beforeSend: function() {
-			$('#submitExport' + type).button('loading');
+			$('.module_confirmation.rees46, .module_error.rees46').remove();
 		},
 		success: function(json) {
 			if (json['success']) {
-				showSuccessMessage(json['success']);
+				$('#module_toolbar').before('<div class="module_confirmation conf confirm rees46">' + json['success'] + '</div>');
 			}
 
 			if (json['next']) {
 				exportData(type, json['next']);
-			} else {
-				$('#submitExport' + type).button('reset');
 			}
 
 			if (json['error']) {
-				showErrorMessage(json['error']);
+				$('#module_toolbar').before('<div class="module_error alert error rees46">' + json['error'] + '</div>');
 			}
 		}
 	});
 }
 
 function checkFiles() {
+	var rees46_token;
+
+	$('#module_form').attr('action').split('&').forEach(function(pair) {
+		var parts = pair.split('=');
+
+		if (parts[0] == 'token') {
+			rees46_token = parts[1];
+		}
+	});
+
 	$.ajax({
-		url: admin_modules_link,
+		url: module_dir + 'rees46/old_ajax.php',
 		data: {
-			ajax: true,
-			configure: 'rees46',
+			ajax: 1,
+			token: rees46_token,
 			action: 'checkFiles',
 		},
 		type: 'post',
 		dataType: 'json',
 		beforeSend: function() {
-			$('#submitCheckFiles').button('loading');
+			$('.module_confirmation.rees46, .module_error.rees46').remove();
 		},
 		success: function(json) {
-			$('#submitCheckFiles').button('reset');
-
 			if (json['success']) {
 				$.map(json['success'], function(success) {
-					showSuccessMessage(success);
+					$('#module_toolbar').before('<div class="module_confirmation conf confirm rees46">' + success + '</div>');
 				});
 			}
 
 			if (json['error']) {
 				$.map(json['error'], function(error) {
-					showErrorMessage(error);
+					$('#module_toolbar').before('<div class="module_error alert error rees46">' + error + '</div>');
 				});
 			}
 		}

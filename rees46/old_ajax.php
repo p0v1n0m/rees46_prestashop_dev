@@ -1,4 +1,5 @@
-{*
+<?php
+/**
  * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
@@ -21,9 +22,16 @@
  *  @copyright 2007-2016 PrestaShop SA
  *  @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  *  International Registered Trademark & Property of PrestaShop SA
- *}
+ */
 
-<div class="block">
-	<h4 class="title_block">{$rees46_title|escape:html:'UTF-8'}</h4>
-	{include file="$tpl_dir./product-list.tpl" products=$rees46_products}
-</div>
+require_once(dirname(__FILE__).'../../../config/config.inc.php');
+require_once(dirname(__FILE__).'../../../init.php');
+require_once(dirname(__FILE__).'../../../modules/rees46/rees46.php');
+
+if (Tools::getValue('ajax') && Tools::getValue('token') && Tools::getValue('action')) {
+	$rees46 = new Rees46();
+
+	$action = 'ajaxProcess' . Tools::getValue('action');
+
+	echo $rees46->$action();
+}

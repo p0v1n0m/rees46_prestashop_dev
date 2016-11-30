@@ -29,12 +29,14 @@
         <ul class="products clearfix">
             {foreach from=$rees46_products item='product' name=product}
                 <li class="clearfix">
-                    <a href="{$product.link|escape:'html'}" class="products-block-image">
-                        <img src="{$product.image}" alt="{$product.name|escape:html:'UTF-8'}" title="{$product.name|escape:html:'UTF-8'}" class="replace-2x img-responsive"/>
+                    <a class="products-block-image" href="{$product.link|escape:'html':'UTF-8'}">
+                        <img src="{$product.image}" alt="{$product.name|htmlspecialchars}" title="{$product.name|htmlspecialchars}" class="replace-2x img-responsive"/>
                     </a>
                     <div class="product-content">
                         <h5>
-                            <a class="product-name" href="{$product.link|escape:'html'}" title="{$product.name|escape:html:'UTF-8'}">{$product.name|truncate:14:'...'|escape:html:'UTF-8'}</a>
+                            <a class="product-name" href="{$product.link|escape:'html':'UTF-8'}">
+                                {$product.name|truncate:15:'...'|escape:html:'UTF-8'}
+                            </a>
                         </h5>
                         <p class="product-description">{$product.description_short|strip_tags:'UTF-8'|truncate:44:'...'}</p>
                         {if (!$PS_CATALOG_MODE AND ((isset($product.show_price) && $product.show_price) || (isset($product.available_for_order) && $product.available_for_order)))}
