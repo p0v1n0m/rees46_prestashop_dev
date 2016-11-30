@@ -682,21 +682,29 @@ class Rees46 extends Module
                 $image = Product::getCover($product->id);
 
                 if ($product->name != null && $product->active && $product->available_for_order) {
+                    $link = $this->context->link->getProductLink(
+                        (int)$product->id,
+                        $product->link_rewrite,
+                        $product->category,
+                        $product->ean13,
+                        $this->context->language->id,
+                        $this->context->shop->id,
+                        0,
+                        false,
+                        false,
+                        false
+                    );
+
+                    if (parse_url($link, PHP_URL_QUERY)) {
+                        $link = $link . '&recommended_by=' . $module_values['type'];
+                    } else {
+                        $link = $link . '?recommended_by=' . $module_values['type'];
+                    }
+
                     $products[] = array(
                         'id_product' => $product->id,
                         'name' => $product->name,
-                        'link' => $this->context->link->getProductLink(
-                            (int)$product->id,
-                            $product->link_rewrite,
-                            $product->category,
-                            $product->ean13,
-                            $this->context->language->id,
-                            $this->context->shop->id,
-                            0,
-                            false,
-                            false,
-                            false
-                        ) . '?recommended_by=' . $module_values['type'],
+                        'link' => $link,
                         'show_price' => $product->show_price,
                         'link_rewrite' => $product->link_rewrite,
                         'price' => $product->getPrice(!Tax::excludeTaxeOption()),
@@ -747,13 +755,11 @@ class Rees46 extends Module
 
             if (!empty($products)) {
                 if ($module_values['template'] == 'product-list') {
-                    //if ($module_values['hook'] == 'displayHome' || $module_values['hook'] == 'displayTopColumn') {
-                        $this->smarty->assign(
-                            array(
-                                'page_name' => 'index',
-                            )
-                        );
-                    //}
+                    $this->smarty->assign(
+                        array(
+                            'page_name' => 'index',
+                        )
+                    );
 
                     $template = 'custom';
                 } else {
@@ -770,7 +776,15 @@ class Rees46 extends Module
                     )
                 );
 
-                return $this->display(__FILE__, 'views/templates/front/old_recommendations_' . $template . '.tpl');
+                if (version_compare(_PS_VERSION_, '1.6', '<')) {
+                    $dir = '15/';
+                } elseif (version_compare(_PS_VERSION_, '1.7', '<')) {
+                    $dir = '15/';
+                } else {
+                    $dir = '';
+                }
+
+                return $this->display(__FILE__, 'views/templates/front/' . $dir . 'recommendations_' . $template . '.tpl');
             }
         }
     }
