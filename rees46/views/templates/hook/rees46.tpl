@@ -23,7 +23,7 @@
  *  International Registered Trademark & Property of PrestaShop SA
  *}
 
-{foreach from=$rees46_modules item=module}
+{foreach from=$rees46_modules item="module"}
 <!-- REES46 Recommendation Module {$module.id_module} -->
 <script type="text/javascript">
 {if {$rees46_css}}

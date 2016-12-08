@@ -24,33 +24,37 @@
  *}
 
 <div class="rees46 rees46-recommend">
-    <div class="recommender-block-title">{$rees46_title|escape:html:'UTF-8'}</div>
-    <div class="recommended-items">
-        {foreach from=$rees46_products item='product' name=product}
-        <div class="recommended-item">
-            <div class="recommended-item-photo">
-                <a href="{$product.link|escape:'html'}">
-                    <img src="{$product.image}" alt="{$product.name|escape:html:'UTF-8'}" title="{$product.name|escape:html:'UTF-8'}" />
-                </a>
-            </div>
-            <div class="recommended-item-title">
-                <a href="{$product.link|escape:'html'}">{$product.name|escape:html:'UTF-8'}</a>
-            </div>
-            {if (!$PS_CATALOG_MODE AND ((isset($product.show_price) && $product.show_price) || (isset($product.available_for_order) && $product.available_for_order)))}
-                {if isset($product.show_price) && $product.show_price && !isset($restricted_country_mode)}
-                    <div class="recommended-item-price">
-                        {if !$priceDisplay}
-                            {convertPrice price=$product.price}
-                        {else}
-                            {convertPrice price=$product.price_tax_exc}
-                        {/if}
-                    </div>
-                {/if}
-            {/if}
-            <div class="recommended-item-action">
-                <a href="{$product.link|escape:'html'}">{$rees46_more}</a>
-            </div>
-        </div>
-        {/foreach}
+  <div class="recommender-block-title">{$rees46_title}</div>
+  <div class="recommended-items">
+    {foreach from=$rees46_products item="product"}
+    <div class="recommended-item">
+      <div class="recommended-item-photo">
+        <a href="{$product.url}">
+          <img src="{$product.cover.bySize.home_default.url}" alt="{$product.name}" title="{$product.name}" />
+        </a>
+      </div>
+      <div class="recommended-item-title">
+        <a href="{$product.url}">{$product.name}</a>
+      </div>
+
+      {block name='product_price_and_shipping'}
+        {if $product.show_price}
+          <div class="recommended-item-price">
+            {hook h='displayProductPriceBlock' product=$product type="before_price"}
+
+            {$product.price}
+
+            {hook h='displayProductPriceBlock' product=$product type='unit_price'}
+
+            {hook h='displayProductPriceBlock' product=$product type='weight'}
+          </div>
+        {/if}
+      {/block}
+
+      <div class="recommended-item-action">
+        <a href="{$product.url}">{$rees46_more}</a>
+      </div>
     </div>
+    {/foreach}
+  </div>
 </div>

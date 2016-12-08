@@ -24,41 +24,70 @@
  *}
 
 <section class="featured-products clearfix">
-  <h3 class="products-section-title text-uppercase">{$rees46_title|escape:html:'UTF-8'}</h3>
+  <h3 class="products-section-title text-uppercase">{$rees46_title}</h3>
   <div class="products">
     {foreach from=$rees46_products item="product"}
-
-        <article class="product-miniature js-product-miniature" data-id-product="{$product.id_product}" itemscope itemtype="http://schema.org/Product">
-          <div class="thumbnail-container">
-            {block name='product_thumbnail'}
-              <a href="{$product.link|escape:'html':'UTF-8'}" class="thumbnail product-thumbnail">
-                <img
-                  src = "{$product.image}"
-                >
-              </a>
+      <article class="product-miniature js-product-miniature" data-id-product="{$product.id_product}" data-id-product-attribute="{$product.id_product_attribute}" itemscope itemtype="http://schema.org/Product">
+        <div class="thumbnail-container">
+          {block name='product_thumbnail'}
+            <a href="{$product.url}" class="thumbnail product-thumbnail">
+              <img
+                src = "{$product.cover.bySize.home_default.url}"
+                alt = "{$product.cover.legend}"
+                data-full-size-image-url = "{$product.cover.large.url}"
+              >
+            </a>
+          {/block}
+          <div class="product-description">
+            {block name='product_name'}
+              <h1 class="h3 product-title" itemprop="name"><a href="{$product.url}">{$product.name|truncate:30:'...'}</a></h1>
             {/block}
+            {block name='product_price_and_shipping'}
+              {if $product.show_price}
+                <div class="product-price-and-shipping">
+                  {if $product.has_discount}
+                    {hook h='displayProductPriceBlock' product=$product type="old_price"}
 
-            <div class="product-description">
-              {block name='product_name'}
-                <h1 class="h3 product-title" itemprop="name"><a href="{$product.link|escape:'html':'UTF-8'}">{$product.name|truncate:30:'...'}</a></h1>
-              {/block}
+                    <span class="regular-price">{$product.regular_price}</span>
+                    {if $product.discount_type === 'percentage'}
+                      <span class="discount-percentage">{$product.discount_percentage}</span>
+                    {/if}
+                  {/if}
 
-              {block name='product_price_and_shipping'}
-                {if $product.show_price}
-                  <div class="product-price-and-shipping">
-                    <span itemprop="price" class="price">{$product.price}</span>
+                  {hook h='displayProductPriceBlock' product=$product type="before_price"}
 
-                    {hook h='displayProductPriceBlock' product=$product type='unit_price'}
+                  <span itemprop="price" class="price">{$product.price}</span>
 
-                    {hook h='displayProductPriceBlock' product=$product type='weight'}
-                  </div>
-                {/if}
-              {/block}
-            </div>
+                  {hook h='displayProductPriceBlock' product=$product type='unit_price'}
 
+                  {hook h='displayProductPriceBlock' product=$product type='weight'}
+                </div>
+              {/if}
+            {/block}
           </div>
-        </article>
-
+          {block name='product_flags'}
+            <ul class="product-flags">
+              {foreach from=$product.flags item=flag}
+                <li class="{$flag.type}">{$flag.label}</li>
+              {/foreach}
+            </ul>
+          {/block}
+          <div class="highlighted-informations{if !$product.main_variants} no-variants{/if} hidden-sm-down">
+            <a
+              href="#"
+              class="quick-view"
+              data-link-action="quickview"
+            >
+              <i class="material-icons search">&#xE8B6;</i> {l s='Quick view' d='Shop.Theme.Actions'}
+            </a>
+            {block name='product_variants'}
+              {if $product.main_variants}
+                {include file='catalog/_partials/variant-links.tpl' variants=$product.main_variants}
+              {/if}
+            {/block}
+          </div>
+        </div>
+      </article>
     {/foreach}
   </div>
 </section>
