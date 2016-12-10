@@ -89,7 +89,7 @@ class Rees46 extends Module
         parent::__construct();
 
         $this->displayName = $this->l('REES46');
-        $this->description = $this->l('eCommerce Marketing Platform.');
+        $this->description = $this->l('eCommerce marketing automation suite.');
         $this->ps_versions_compliancy = array(
             'min' => '1.5.0.0',
             'max' => _PS_VERSION_,
@@ -892,13 +892,13 @@ class Rees46 extends Module
                 }
             }
 
-            $output .= $this->displayConfirmation($this->l('Settings updated'));
+            $output .= $this->displayConfirmation($this->l('The settings have been successfully updated.'));
 
             $output .= $this->renderForm().$this->renderList().$this->renderFormHelp();
         } elseif (Tools::isSubmit('submit_module')) { // save module
             Configuration::updateValue('REES46_MODULE_' . Tools::getValue('id_module'), json_encode($this->getModuleValues()));
 
-            $output .= $this->displayConfirmation($this->l('Settings updated'));
+            $output .= $this->displayConfirmation($this->l('The settings have been successfully updated.'));
 
             $output .= $this->renderForm().$this->renderList().$this->renderFormHelp();
         } elseif (Tools::isSubmit('deletemodule')
@@ -907,7 +907,7 @@ class Rees46 extends Module
         ) { // delete module
             Configuration::deleteByName('REES46_MODULE_' . Tools::getValue('id_module'));
 
-            $output .= $this->displayConfirmation($this->l('Settings updated'));
+            $output .= $this->displayConfirmation($this->l('The settings have been successfully updated.'));
 
             $output .= $this->renderForm().$this->renderList().$this->renderFormHelp();
         } elseif (Tools::isSubmit('new_module')
@@ -1090,9 +1090,9 @@ class Rees46 extends Module
                 'icon' => 'icon-save',
                 'class' => 'button btn btn-default pull-right',
             ),
-            'description' => $this->l('Manual export is required once - during initial configuration.')
-                . $this->l(' Exported orders are the orders for the last 6 months with the statuses of your choice.')
-                . $this->l(' Please remember to save current settings before starting the export.'),
+            'description' => $this->l('Manual export is required once - during initial configuration. ')
+                . $this->l('Exported orders are the orders for the last 6 months with the statuses of your choice. ')
+                . $this->l('Please remember to save current settings before starting the export.'),
             'buttons' => array(
                 array(
                     'title' => $this->l('Export Orders'),
@@ -1150,12 +1150,12 @@ class Rees46 extends Module
                 'title' => $this->l('Web Push'),
                 'icon' => 'icon-envelope',
             ),
-            'description' => $this->l('To enable Web Push Notifications, your website first needs to support HTTPS!')
-                . $this->l(' Files manifest.json and push_sw.js will automatically be placed in the root directory of your online store.')
-                . $this->l(' Click Download Files.'),
+            'description' => $this->l('To enable Web Push Notifications, your website first needs to support HTTPS! ')
+                . $this->l('Files manifest.json and push_sw.js will automatically be placed in the root directory of your online store. ')
+                . $this->l('Click "Check Files".'),
             'buttons' => array(
                 array(
-                    'title' => $this->l('Download Files'),
+                    'title' => $this->l('Check Files'),
                     'icon' => 'icon-refresh',
                     'id' => 'submitCheckFiles',
                     'name' => 'submitCheckFiles',
@@ -1195,7 +1195,7 @@ class Rees46 extends Module
                     'name' => 'submitExportCustomers',
                 ),
                 'preview' => array(
-                    'desc' => $this->l('Download Files'),
+                    'desc' => $this->l('Check Files'),
                     'name' => 'submitCheckFiles',
                 ),
             );
@@ -1478,7 +1478,7 @@ class Rees46 extends Module
                 ),
                 array(
                     'type' => 'select',
-                    'label' => $this->l('Image type'),
+                    'label' => $this->l('Image Type'),
                     'name' => 'image_type',
                     'options' => array(
                         'query' => $images_types,
