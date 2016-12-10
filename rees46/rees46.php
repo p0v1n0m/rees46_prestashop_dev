@@ -48,6 +48,9 @@ class Rees46 extends Module
 
     protected static $hooks = array(
         'header',
+        'actionProductAdd',
+        'actionProductUpdate',
+        'actionProductDelete',
         'actionCartSave',
         'actionValidateOrder',
         'actionOrderStatusPostUpdate',
@@ -98,6 +101,8 @@ class Rees46 extends Module
 
     public function install()
     {
+        $this->_clearCache('*');
+
         if (parent::install() && $this->updateFields() && $this->registerHooks()) {
             return true;
         } else {
@@ -107,6 +112,8 @@ class Rees46 extends Module
 
     public function uninstall()
     {
+        $this->_clearCache('*');
+
         if (parent::uninstall() && $this->deleteFields() && $this->unregisterHooks()) {
             return true;
         } else {
@@ -170,6 +177,21 @@ class Rees46 extends Module
         }
 
         return true;
+    }
+
+    public function hookActionProductAdd($params)
+    {
+        $this->_clearCache('*');
+    }
+
+    public function hookActionProductUpdate($params)
+    {
+        $this->_clearCache('*');
+    }
+
+    public function hookActionProductDelete($params)
+    {
+        $this->_clearCache('*');
     }
 
     public function hookHeader()
@@ -510,6 +532,22 @@ class Rees46 extends Module
         return $this->getModules('displaySearch');
     }
 
+    public function _clearCache($template, $cache_id = NULL, $compile_id = NULL)
+    {
+        parent::_clearCache('views/templates/front/recommendations_basic.tpl');
+        parent::_clearCache('views/templates/front/recommendations_custom.tpl');
+        parent::_clearCache('views/templates/front/recommendations_home.tpl');
+        parent::_clearCache('views/templates/front/recommendations_sidebar.tpl');
+        parent::_clearCache('views/templates/front/16/recommendations_basic.tpl');
+        parent::_clearCache('views/templates/front/16/recommendations_custom.tpl');
+        parent::_clearCache('views/templates/front/16/recommendations_home.tpl');
+        parent::_clearCache('views/templates/front/16/recommendations_sidebar.tpl');
+        parent::_clearCache('views/templates/front/15/recommendations_basic.tpl');
+        parent::_clearCache('views/templates/front/15/recommendations_custom.tpl');
+        parent::_clearCache('views/templates/front/15/recommendations_home.tpl');
+        parent::_clearCache('views/templates/front/15/recommendations_sidebar.tpl');
+    }
+
     private function getModules($hook)
     {
         if (Configuration::get('REES46_STORE_KEY') != ''
@@ -690,155 +728,163 @@ class Rees46 extends Module
                 $title = $module_values['title'][$this->context->language->id];
             }
 
-            if (version_compare(_PS_VERSION_, '1.7', '<')) {
-                foreach ($product_ids as $product_id) {
-                    $product = new Product(
-                        (int)$product_id,
-                        true,
-                        $this->context->language->id,
-                        $this->context->shop->id
-                    );
-
-                    $image = Product::getCover($product->id);
-
-                    if ($product->name != null && $product->active && $product->available_for_order) {
-                        $link = $this->context->link->getProductLink(
-                            (int)$product->id,
-                            $product->link_rewrite,
-                            $product->category,
-                            $product->ean13,
-                            $this->context->language->id,
-                            $this->context->shop->id,
-                            0,
-                            false,
-                            false,
-                            false
-                        );
-
-                        if (parse_url($link, PHP_URL_QUERY)) {
-                            $link = $link . '&recommended_by=' . $module_values['type'];
-                        } else {
-                            $link = $link . '?recommended_by=' . $module_values['type'];
-                        }
-
-                        $products[] = array(
-                            'id_product' => $product->id,
-                            'name' => $product->name,
-                            'link' => $link,
-                            'show_price' => $product->show_price,
-                            'link_rewrite' => $product->link_rewrite,
-                            'price' => $product->getPrice(!Tax::excludeTaxeOption()),
-                            'price_without_reduction' => Product::getPriceStatic((int)$product->id),
-                            'id_product_attribute' => Product::getDefaultAttribute($product->id),
-                            'customizable' => $product->customizable,
-                            'allow_oosp' => Product::isAvailableWhenOutOfStock($product->out_of_stock),
-                            'quantity' => $product->quantity,
-                            'image' => $this->context->link->getImageLink(
-                                $product->link_rewrite[$this->context->language->id],
-                                $image['id_image'],
-                                $module_values['image_type']
-                            ),
-                            'id_image' => $image['id_image'],
-                            'description_short' => $product->description_short,
-                            'available_for_order' => false,
-                        );
-                    } else {
-                        $this->$this->curlDisable($product_id);
-                    }
-                }
-            } else {
-                foreach ($product_ids as $product_id) {
-                    $product = (new ProductDataProvider)->getProduct(
-                        (int)$product_id,
-                        true,
-                        $this->context->language->id,
-                        $this->context->shop->id
-                    );
-
-                    $id_image = $product->getCover($product_id);
-
-                    $fix_product = new Product(
-                        (int)$product_id,
-                        true,
-                        $this->context->language->id,
-                        $this->context->shop->id
-                    );
-
-                    $cover = (new ImageRetriever($this->context->link))->getImage($fix_product, (int)$id_image['id_image']);
-
-                    if ($product->name != null && $product->active && $product->available_for_order) {
-                        $url = $this->context->link->getProductLink(
-                            (int)$product_id,
-                            $product->link_rewrite,
-                            $product->category,
-                            $product->ean13,
-                            $this->context->language->id,
-                            $this->context->shop->id,
-                            0,
-                            false,
-                            false,
-                            false
-                        );
-
-                        if (parse_url($url, PHP_URL_QUERY)) {
-                            $url = $url . '&recommended_by=' . $module_values['type'];
-                        } else {
-                            $url = $url . '?recommended_by=' . $module_values['type'];
-                        }
-
-                        $products[] = array(
-                            'id_product' => $product_id,
-                            'name' => $product->name,
-                            'url' => $url,
-                            'cover' => $cover,
-                            'id_product_attribute' => Product::getDefaultAttribute($product->id),
-                            'available_for_order' => (bool)$product->available_for_order,
-                            'show_price' => (bool)$product->show_price,
-                            'price' => Tools::displayPrice(Tools::convertPrice($product->getPrice(!Tax::excludeTaxeOption()))),
-                            'online_only' => (bool)$product->online_only,
-                            'description_short' => $product->description_short,
-                            'main_variants' => false,
-                            'has_discount' => false,
-                            'flags' => false,
-                        );
-                    } else {
-                        $this->$this->curlDisable($product_id);
-                    }
-                }
-            }
-
-            if (!empty($products)) {
-                if ($module_values['template'] == 'product-list') {
-                    $this->smarty->assign(
-                        array(
-                            'page_name' => 'index',
-                        )
-                    );
-
-                    $template = 'custom';
-                } else {
-                    $template = $module_values['template'];
-                }
-
+            if ($module_values['template'] == 'product-list') {
                 $this->smarty->assign(
                     array(
-                        'rees46_module_id' => $module_id,
-                        'rees46_title' => $title,
-                        'rees46_more' => $this->l('More'),
-                        'rees46_products' => $products,
-                        'rees46_template' => $module_values['template'],
+                        'page_name' => 'index',
                     )
                 );
 
-                if (version_compare(_PS_VERSION_, '1.6', '<')) {
-                    $dir = '15/';
-                } elseif (version_compare(_PS_VERSION_, '1.7', '<')) {
-                    $dir = '16/';
+                $template = 'custom';
+            } else {
+                $template = $module_values['template'];
+            }
+
+            if (version_compare(_PS_VERSION_, '1.6', '<')) {
+                $dir = '15/';
+            } elseif (version_compare(_PS_VERSION_, '1.7', '<')) {
+                $dir = '16/';
+            } else {
+                $dir = '';
+            }
+
+            $template_file = 'views/templates/front/' . $dir . 'recommendations_' . $template . '.tpl';
+
+            $cache_id = 'rees46|' . $module_id . '|' . $template . '|' . implode('|', $product_ids);
+
+            if (!$this->isCached($template_file, $this->getCacheId($cache_id))) {
+                if (version_compare(_PS_VERSION_, '1.7', '<')) {
+                    foreach ($product_ids as $product_id) {
+                        $product = new Product(
+                            (int)$product_id,
+                            true,
+                            $this->context->language->id,
+                            $this->context->shop->id
+                        );
+
+                        $image = Product::getCover($product->id);
+
+                        if ($product->name != null && $product->active && $product->available_for_order) {
+                            $link = $this->context->link->getProductLink(
+                                (int)$product->id,
+                                $product->link_rewrite,
+                                $product->category,
+                                $product->ean13,
+                                $this->context->language->id,
+                                $this->context->shop->id,
+                                0,
+                                false,
+                                false,
+                                false
+                            );
+
+                            if (parse_url($link, PHP_URL_QUERY)) {
+                                $link = $link . '&recommended_by=' . $module_values['type'];
+                            } else {
+                                $link = $link . '?recommended_by=' . $module_values['type'];
+                            }
+
+                            $products[] = array(
+                                'id_product' => $product->id,
+                                'name' => $product->name,
+                                'link' => $link,
+                                'show_price' => $product->show_price,
+                                'link_rewrite' => $product->link_rewrite,
+                                'price' => $product->getPrice(!Tax::excludeTaxeOption()),
+                                'price_without_reduction' => Product::getPriceStatic((int)$product->id),
+                                'id_product_attribute' => Product::getDefaultAttribute($product->id),
+                                'customizable' => $product->customizable,
+                                'allow_oosp' => Product::isAvailableWhenOutOfStock($product->out_of_stock),
+                                'quantity' => $product->quantity,
+                                'image' => $this->context->link->getImageLink(
+                                    $product->link_rewrite[$this->context->language->id],
+                                    $image['id_image'],
+                                    $module_values['image_type']
+                                ),
+                                'id_image' => $image['id_image'],
+                                'description_short' => $product->description_short,
+                                'available_for_order' => false,
+                            );
+                        } else {
+                            $this->curlDisable($product_id);
+                        }
+                    }
                 } else {
-                    $dir = '';
+                    foreach ($product_ids as $product_id) {
+                        $product = (new ProductDataProvider)->getProduct(
+                            (int)$product_id,
+                            true,
+                            $this->context->language->id,
+                            $this->context->shop->id
+                        );
+
+                        $id_image = $product->getCover($product_id);
+
+                        $fix_product = new Product(
+                            (int)$product_id,
+                            true,
+                            $this->context->language->id,
+                            $this->context->shop->id
+                        );
+
+                        $cover = (new ImageRetriever($this->context->link))->getImage($fix_product, (int)$id_image['id_image']);
+
+                        if ($product->name != null && $product->active && $product->available_for_order) {
+                            $url = $this->context->link->getProductLink(
+                                (int)$product_id,
+                                $product->link_rewrite,
+                                $product->category,
+                                $product->ean13,
+                                $this->context->language->id,
+                                $this->context->shop->id,
+                                0,
+                                false,
+                                false,
+                                false
+                            );
+
+                            if (parse_url($url, PHP_URL_QUERY)) {
+                                $url = $url . '&recommended_by=' . $module_values['type'];
+                            } else {
+                                $url = $url . '?recommended_by=' . $module_values['type'];
+                            }
+
+                            $products[] = array(
+                                'id_product' => $product_id,
+                                'name' => $product->name,
+                                'url' => $url,
+                                'cover' => $cover,
+                                'id_product_attribute' => Product::getDefaultAttribute($product->id),
+                                'available_for_order' => (bool)$product->available_for_order,
+                                'show_price' => (bool)$product->show_price,
+                                'price' => Tools::displayPrice(Tools::convertPrice($product->getPrice(!Tax::excludeTaxeOption()))),
+                                'online_only' => (bool)$product->online_only,
+                                'description_short' => $product->description_short,
+                                'main_variants' => false,
+                                'has_discount' => false,
+                                'flags' => false,
+                            );
+                        } else {
+                            $this->curlDisable($product_id);
+                        }
+                    }
                 }
 
-                return $this->display(__FILE__, 'views/templates/front/' . $dir . 'recommendations_' . $template . '.tpl');
+                if (!empty($products)) {
+                    $this->smarty->assign(
+                        array(
+                            'rees46_module_id' => $module_id,
+                            'rees46_title' => $title,
+                            'rees46_more' => $this->l('More'),
+                            'rees46_products' => $products,
+                            'rees46_template' => $module_values['template'],
+                        )
+                    );
+
+                    return $this->display(__FILE__, $template_file, $this->getCacheId($cache_id));
+                }
+            } else {
+                return $this->display(__FILE__, $template_file, $this->getCacheId($cache_id));
             }
         }
     }
@@ -854,6 +900,8 @@ class Rees46 extends Module
         $output = null;
 
         if (Tools::isSubmit('submit' . $this->name)) {
+            $this->_clearCache('*');
+
             foreach (Rees46::$fields as $field) {
                 if ('REES46_ORDER' == substr($field, 0, 12)) {
                     Configuration::updateValue($field, json_encode(Tools::getValue($field)));
