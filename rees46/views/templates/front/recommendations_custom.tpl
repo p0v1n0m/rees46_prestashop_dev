@@ -24,7 +24,7 @@
  *}
 
 <section class="featured-products clearfix">
-  <h3 class="products-section-title text-uppercase">{$rees46_title}</h3>
+  <h3 class="products-section-title text-uppercase">{$rees46_title|escape:'htmlall':'UTF-8'}</h3>
   <div class="products">
     {foreach from=$rees46_products item='product'}
       {include file="catalog/_partials/miniatures/product.tpl" product=$product}

@@ -24,7 +24,7 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 
-class rees46XmlModuleFrontController extends ModuleFrontController
+class Rees46XmlModuleFrontController extends ModuleFrontController
 {
     public $ssl = false;
     public $display_header = false;
@@ -53,7 +53,10 @@ class rees46XmlModuleFrontController extends ModuleFrontController
                 if (Tools::getValue('prev') != 'finish') {
                     $prev = $this->generateOffers(Tools::getValue('prev'));
 
-                    die('<meta http-equiv="refresh" content="0;index.php?fc=module&module=rees46&controller=xml&prev=' . $prev .'">');
+                    $redirect = '<meta http-equiv="refresh" content="0;';
+                    $redirect .= 'index.php?fc=module&module=rees46&controller=xml&prev=' . $prev .'">';
+
+                    die($redirect);
                 } elseif (Tools::getValue('prev') == 'finish') {
                     $xml  = '    </offers>' . "\n";
                     $xml .= '  </shop>' . "\n";
@@ -62,12 +65,12 @@ class rees46XmlModuleFrontController extends ModuleFrontController
                     $this->recorder($xml, 'a');
 
                     header('Content-Type: application/xml; charset=utf-8');
-                    echo file_get_contents(_PS_DOWNLOAD_DIR_ . 'rees46.xml');
+                    echo Tools::file_get_contents(_PS_DOWNLOAD_DIR_ . 'rees46.xml');
                 }
             } else {
                 if (is_file(_PS_DOWNLOAD_DIR_ . 'rees46_cron.xml')) {
                     header('Content-Type: application/xml; charset=utf-8');
-                    echo file_get_contents(_PS_DOWNLOAD_DIR_ . 'rees46_cron.xml');
+                    echo Tools::file_get_contents(_PS_DOWNLOAD_DIR_ . 'rees46_cron.xml');
                 } else {
                     $this->recorder('', 'w+');
 
@@ -81,7 +84,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
         }
     }
 
-    protected function generateShop() {
+    protected function generateShop()
+    {
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<!DOCTYPE yml_catalog SYSTEM "shops.dtd">' . "\n";
         $xml .= '<yml_catalog date="' . date('Y-m-d H:i') . '">' . "\n";
@@ -95,7 +99,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
         $this->recorder($xml, 'a');
     }
 
-    protected function generateCurrencies() {
+    protected function generateCurrencies()
+    {
         $currencies = Currency::getCurrencies();
 
         $xml = '    <currencies>';
@@ -104,7 +109,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
             if ($currency['id_currency'] == Configuration::get('REES46_XML_CURRENCY')) {
                 $xml .= "\n" . '      <currency id="' . $currency['iso_code'] . '" rate="1"/>';
             } elseif ($currency['active'] == 1) {
-                $xml .= "\n" . '      <currency id="' . $currency['iso_code'] . '" rate="' . number_format(1 / $currency['conversion_rate'], 4, '.', '') . '"/>';
+                $xml .= "\n" . '      <currency id="' . $currency['iso_code'] . '" ';
+                $xml .= 'rate="' . number_format(1 / $currency['conversion_rate'], 4, '.', '') . '"/>';
             }
         }
 
@@ -113,7 +119,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
         $this->recorder($xml, 'a');
     }
 
-    protected function generateCategories() {
+    protected function generateCategories()
+    {
         $categories = Category::getCategories((int)Configuration::get('PS_LANG_DEFAULT'));
 
         if (!empty($categories)) {
@@ -127,7 +134,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
                         $parent = '';
                     }
 
-                    $xml .= "\n" . '      <category id="' . $category['infos']['id_category'] . '"' . $parent . '>' . $this->replacer($category['infos']['name']) . '</category>';
+                    $xml .= "\n" . '      <category id="' . $category['infos']['id_category'] . '"' . $parent . '>';
+                    $xml .= $this->replacer($category['infos']['name']) . '</category>';
                 }
             }
 
@@ -137,7 +145,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
         }
     }
 
-    protected function generateOffers($prev) {
+    protected function generateOffers($prev)
+    {
         if ($prev == 1) {
             $xml = '    <offers>' . "\n";
         } else {
@@ -153,7 +162,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
                 (int)Configuration::get('PS_LANG_DEFAULT')
             );
 
-            $xml .= '      <offer id="' . $product->id . '" available="' . ($product->quantity > 0 ? 'true' : 'false') . '">' . "\n";
+            $xml .= '      <offer id="' . $product->id . '" ';
+            $xml .= 'available="' . ($product->quantity > 0 ? 'true' : 'false') . '">' . "\n";
             $xml .= '        <url>' . $this->context->link->getProductLink($product->id) . '</url>' . "\n";
 
             $price = $product->getPrice(!Tax::excludeTaxeOption());
@@ -206,11 +216,16 @@ class rees46XmlModuleFrontController extends ModuleFrontController
         return $prev;
     }
 
-    protected function replacer($str) {
-        return trim(str_replace('&#039;', '&apos;', htmlspecialchars(htmlspecialchars_decode($str, ENT_QUOTES), ENT_QUOTES)));
+    protected function replacer($str)
+    {
+        return trim(str_replace('&#039;', '&apos;', htmlspecialchars(
+            htmlspecialchars_decode($str, ENT_QUOTES),
+            ENT_QUOTES
+        )));
     }
 
-    protected function recorder($xml, $mode) {
+    protected function recorder($xml, $mode)
+    {
         if (!$fp = fopen(_PS_DOWNLOAD_DIR_ . 'rees46.xml', $mode)) {
             if (Configuration::get('REES46_LOG_STATUS')) {
                 $this->log->write('REES46 log: Could not open xml file [ERROR]');
@@ -225,7 +240,8 @@ class rees46XmlModuleFrontController extends ModuleFrontController
         fclose($fp);
     }
 
-    protected function getIdProduct($prev) {
+    protected function getIdProduct($prev)
+    {
         $query = new DbQuery();
         $query->select('p.`id_product`');
         $query->from('product', 'p');

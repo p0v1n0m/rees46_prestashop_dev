@@ -24,7 +24,7 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 
-class rees46CronModuleFrontController extends ModuleFrontController
+class Rees46CronModuleFrontController extends ModuleFrontController
 {
     public $ssl = false;
     public $display_header = false;
@@ -41,30 +41,31 @@ class rees46CronModuleFrontController extends ModuleFrontController
         if (Configuration::get('REES46_STORE_KEY') != ''
             && Configuration::get('REES46_SECRET_KEY') != ''
         ) {
-			$this->recorder('', 'w+');
+            $this->recorder('', 'w+');
 
-			$this->generateShop();
-			$this->generateCurrencies();
-			$this->generateCategories();
+            $this->generateShop();
+            $this->generateCurrencies();
+            $this->generateCategories();
 
-			while (isset($this->prev)) {
-				$this->generateOffers();
-			}
+            while (isset($this->prev)) {
+                $this->generateOffers();
+            }
 
-			$xml  = '    </offers>' . "\n";
-			$xml .= '  </shop>' . "\n";
-			$xml .= '</yml_catalog>';
+            $xml  = '    </offers>' . "\n";
+            $xml .= '  </shop>' . "\n";
+            $xml .= '</yml_catalog>';
 
-			$this->recorder($xml, 'a');
+            $this->recorder($xml, 'a');
 
             header('Content-Type: application/xml; charset=utf-8');
-            echo file_get_contents(_PS_DOWNLOAD_DIR_ . 'rees46_cron.xml');
+            echo Tools::file_get_contents(_PS_DOWNLOAD_DIR_ . 'rees46_cron.xml');
         } else {
             Tools::redirect('index.php?controller=404');
         }
     }
 
-    protected function generateShop() {
+    protected function generateShop()
+    {
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<!DOCTYPE yml_catalog SYSTEM "shops.dtd">' . "\n";
         $xml .= '<yml_catalog date="' . date('Y-m-d H:i') . '">' . "\n";
@@ -78,7 +79,8 @@ class rees46CronModuleFrontController extends ModuleFrontController
         $this->recorder($xml, 'a');
     }
 
-    protected function generateCurrencies() {
+    protected function generateCurrencies()
+    {
         $currencies = Currency::getCurrencies();
 
         $xml = '    <currencies>';
@@ -87,7 +89,8 @@ class rees46CronModuleFrontController extends ModuleFrontController
             if ($currency['id_currency'] == Configuration::get('REES46_XML_CURRENCY')) {
                 $xml .= "\n" . '      <currency id="' . $currency['iso_code'] . '" rate="1"/>';
             } elseif ($currency['active'] == 1) {
-                $xml .= "\n" . '      <currency id="' . $currency['iso_code'] . '" rate="' . number_format(1 / $currency['conversion_rate'], 4, '.', '') . '"/>';
+                $xml .= "\n" . '      <currency id="' . $currency['iso_code'] . '" ';
+                $xml .= 'rate="' . number_format(1 / $currency['conversion_rate'], 4, '.', '') . '"/>';
             }
         }
 
@@ -96,7 +99,8 @@ class rees46CronModuleFrontController extends ModuleFrontController
         $this->recorder($xml, 'a');
     }
 
-    protected function generateCategories() {
+    protected function generateCategories()
+    {
         $categories = Category::getCategories((int)Configuration::get('PS_LANG_DEFAULT'));
 
         if (!empty($categories)) {
@@ -110,7 +114,8 @@ class rees46CronModuleFrontController extends ModuleFrontController
                         $parent = '';
                     }
 
-                    $xml .= "\n" . '      <category id="' . $category['infos']['id_category'] . '"' . $parent . '>' . $this->replacer($category['infos']['name']) . '</category>';
+                    $xml .= "\n" . '      <category id="' . $category['infos']['id_category'] . '"' . $parent . '>';
+                    $xml .= $this->replacer($category['infos']['name']) . '</category>';
                 }
             }
 
@@ -120,7 +125,8 @@ class rees46CronModuleFrontController extends ModuleFrontController
         }
     }
 
-    protected function generateOffers() {
+    protected function generateOffers()
+    {
         if ($this->prev == 1) {
             $xml = '    <offers>' . "\n";
         } else {
@@ -136,7 +142,8 @@ class rees46CronModuleFrontController extends ModuleFrontController
                 (int)Configuration::get('PS_LANG_DEFAULT')
             );
 
-            $xml .= '      <offer id="' . $product->id . '" available="' . ($product->quantity > 0 ? 'true' : 'false') . '">' . "\n";
+            $xml .= '      <offer id="' . $product->id . '" ';
+            $xml .= 'available="' . ($product->quantity > 0 ? 'true' : 'false') . '">' . "\n";
             $xml .= '        <url>' . $this->context->link->getProductLink($product->id) . '</url>' . "\n";
 
             $price = $product->getPrice(!Tax::excludeTaxeOption());
@@ -187,11 +194,16 @@ class rees46CronModuleFrontController extends ModuleFrontController
         $this->recorder($xml, 'a');
     }
 
-    protected function replacer($str) {
-        return trim(str_replace('&#039;', '&apos;', htmlspecialchars(htmlspecialchars_decode($str, ENT_QUOTES), ENT_QUOTES)));
+    protected function replacer($str)
+    {
+        return trim(str_replace('&#039;', '&apos;', htmlspecialchars(
+            htmlspecialchars_decode($str, ENT_QUOTES),
+            ENT_QUOTES
+        )));
     }
 
-    protected function recorder($xml, $mode) {
+    protected function recorder($xml, $mode)
+    {
         if (!$fp = fopen(_PS_DOWNLOAD_DIR_ . 'rees46_cron.xml', $mode)) {
             if (Configuration::get('REES46_LOG_STATUS')) {
                 $this->log->write('REES46 log: Could not open xml file [ERROR]');
@@ -206,7 +218,8 @@ class rees46CronModuleFrontController extends ModuleFrontController
         fclose($fp);
     }
 
-    protected function getIdProduct($prev) {
+    protected function getIdProduct($prev)
+    {
         $query = new DbQuery();
         $query->select('p.`id_product`');
         $query->from('product', 'p');

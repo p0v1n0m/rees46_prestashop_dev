@@ -29,9 +29,9 @@ include_once('../../init.php');
 include_once('rees46.php');
 
 if (Tools::getValue('ajax') && Tools::getValue('token') && Tools::getValue('action')) {
-	$rees46 = new Rees46();
+    $rees46 = new Rees46();
 
-	$action = 'ajaxProcess' . Tools::getValue('action');
+    $action = 'ajaxProcess' . Tools::getValue('action');
 
-	echo $rees46->$action();
+    echo $rees46->$action();
 }

@@ -24,7 +24,7 @@
  *}
 
 <section class="featured-products clearfix hidden-sm-down">
-  <h3 class="products-section-title text-uppercase">{$rees46_title}</h3>
+  <h3 class="products-section-title text-uppercase">{$rees46_title|escape:'htmlall':'UTF-8'}</h3>
   <div class="products">
     {foreach from=$rees46_products item="product"}
       <article class="product-miniature js-product-miniature" data-id-product="{$product.id_product}" data-id-product-attribute="{$product.id_product_attribute}" itemscope itemtype="http://schema.org/Product" style="margin: 0;">

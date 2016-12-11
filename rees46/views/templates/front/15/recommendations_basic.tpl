@@ -24,17 +24,17 @@
  *}
 
 <div class="rees46 rees46-recommend">
-    <div class="recommender-block-title">{$rees46_title|escape:html:'UTF-8'}</div>
+    <div class="recommender-block-title">{$rees46_title|escape:'htmlall':'UTF-8'}</div>
     <div class="recommended-items">
         {foreach from=$rees46_products item='product' name=product}
         <div class="recommended-item">
             <div class="recommended-item-photo">
-                <a href="{$product.link|escape:'html'}">
-                    <img src="{$product.image}" alt="{$product.name|escape:html:'UTF-8'}" title="{$product.name|escape:html:'UTF-8'}" />
+                <a href="{$product.link|escape:'htmlall':'UTF-8'}">
+                    <img src="{$product.image}" alt="{$product.name|escape:'htmlall':'UTF-8'}" title="{$product.name|escape:'htmlall':'UTF-8'}" />
                 </a>
             </div>
             <div class="recommended-item-title">
-                <a href="{$product.link|escape:'html'}">{$product.name|escape:html:'UTF-8'}</a>
+                <a href="{$product.link|escape:'htmlall':'UTF-8'}">{$product.name|escape:'htmlall':'UTF-8'}</a>
             </div>
             {if (!$PS_CATALOG_MODE AND ((isset($product.show_price) && $product.show_price) || (isset($product.available_for_order) && $product.available_for_order)))}
                 {if isset($product.show_price) && $product.show_price && !isset($restricted_country_mode)}
@@ -48,7 +48,7 @@
                 {/if}
             {/if}
             <div class="recommended-item-action">
-                <a href="{$product.link|escape:'html'}">{$rees46_more}</a>
+                <a href="{$product.link|escape:'htmlall':'UTF-8'}">{$rees46_more}</a>
             </div>
         </div>
         {/foreach}

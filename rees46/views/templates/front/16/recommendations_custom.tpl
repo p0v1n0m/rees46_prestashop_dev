@@ -24,6 +24,6 @@
  *}
 
 <div class="block">
-	<h4 class="title_block">{$rees46_title|escape:html:'UTF-8'}</h4>
+	<h4 class="title_block">{$rees46_title|escape:'htmlall':'UTF-8'}</h4>
 	{include file="$tpl_dir./$rees46_template.tpl" products=$rees46_products}
 </div>

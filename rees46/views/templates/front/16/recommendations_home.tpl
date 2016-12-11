@@ -25,17 +25,17 @@
 
 <div class="block">
     <section class="page-product-box">
-        <h3 class="productscategory_h2 page-product-heading">{$rees46_title|escape:html:'UTF-8'}</h3>
+        <h3 class="productscategory_h2 page-product-heading">{$rees46_title|escape:'htmlall':'UTF-8'}</h3>
         <ul class="clearfix">
             {foreach from=$rees46_products item=product name=product}
                 <li class="product-box item">
-                    <a class="lnk_img product-image" href="{$product.link|escape:'html':'UTF-8'}">
+                    <a class="lnk_img product-image" href="{$product.link|escape:'htmlall':'UTF-8'}">
                         <img src="{$product.image}" alt="{$product.name|htmlspecialchars}" title="{$product.name|htmlspecialchars}" />
                     </a>
                     <div class="s_title_block">
                         <h5 class="product-name">
-                            <a href="{$product.link|escape:'html':'UTF-8'}">
-                                {$product.name|truncate:15:'...'|escape:'html':'UTF-8'}
+                            <a href="{$product.link|escape:'htmlall':'UTF-8'}">
+                                {$product.name|truncate:15:'...'|escape:'htmlall':'UTF-8'}
                             </a>
                         </h5>
                         <p class="product-description">{$product.description_short|strip_tags:'UTF-8'|truncate:50:'...'}</p>
@@ -56,8 +56,8 @@
                     <div class="clearfix" style="margin-top:5px">
                         {if !$PS_CATALOG_MODE && ($product.allow_oosp || $product.quantity > 0)}
                             <div class="no-print">
-                                <a class="exclusive button ajax_add_to_cart_button" href="{$product.link|escape:'html':'UTF-8'}">
-                                    <span>{$rees46_more|escape:html:'UTF-8'}</span>
+                                <a class="exclusive button ajax_add_to_cart_button" href="{$product.link|escape:'htmlall':'UTF-8'}">
+                                    <span>{$rees46_more|escape:'htmlall':'UTF-8'}</span>
                                 </a>
                             </div>
                         {/if}

@@ -24,18 +24,18 @@
  *}
 
 <div class="block">
-    <h4 class="title_block">{$rees46_title|escape:html:'UTF-8'}</h4>
+    <h4 class="title_block">{$rees46_title|escape:'htmlall':'UTF-8'}</h4>
     <div class="block_content products-block">
         <ul class="products clearfix">
             {foreach from=$rees46_products item='product' name=product}
                 <li class="clearfix">
-                    <a class="products-block-image" href="{$product.link|escape:'html':'UTF-8'}">
+                    <a class="products-block-image" href="{$product.link|escape:'htmlall':'UTF-8'}">
                         <img src="{$product.image}" alt="{$product.name|htmlspecialchars}" title="{$product.name|htmlspecialchars}" class="replace-2x img-responsive"/>
                     </a>
                     <div class="product-content">
                         <h5>
-                            <a class="product-name" href="{$product.link|escape:'html':'UTF-8'}">
-                                {$product.name|truncate:15:'...'|escape:html:'UTF-8'}
+                            <a class="product-name" href="{$product.link|escape:'htmlall':'UTF-8'}">
+                                {$product.name|truncate:15:'...'|escape:'htmlall':'UTF-8'}
                             </a>
                         </h5>
                         <p class="product-description">{$product.description_short|strip_tags:'UTF-8'|truncate:44:'...'}</p>

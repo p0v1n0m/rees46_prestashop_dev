@@ -24,7 +24,7 @@
  *}
 
 <div id="featured-products_block_center" class="block products_block clearfix">
-    <h4 class="title_block">{$rees46_title|escape:html:'UTF-8'}</h4>
+    <h4 class="title_block">{$rees46_title|escape:'htmlall':'UTF-8'}</h4>
     <div class="block_content">
         {assign var='liHeight' value=250}
         {assign var='nbItemsPerLine' value=4}
@@ -36,12 +36,12 @@
             {math equation="(total%perLine)" total=$smarty.foreach.product.total perLine=$nbItemsPerLine assign=totModulo}
             {if $totModulo == 0}{assign var='totModulo' value=$nbItemsPerLine}{/if}
             <li class="ajax_block_product {if $smarty.foreach.product.first}first_item{elseif $smarty.foreach.product.last}last_item{else}item{/if} {if $smarty.foreach.product.iteration%$nbItemsPerLine == 0}last_item_of_line{elseif $smarty.foreach.product.iteration%$nbItemsPerLine == 1} {/if} {if $smarty.foreach.product.iteration > ($smarty.foreach.product.total - $totModulo)}last_line{/if}">
-                <a href="{$product.link|escape:'html'}" title="{$product.name|escape:html:'UTF-8'}" class="product_image"><img src="{$link->getImageLink($product.link_rewrite, $product.id_image, 'home_default')|escape:'html'}" alt="{$product.name|escape:html:'UTF-8'}" />
+                <a href="{$product.link|escape:'htmlall':'UTF-8'}" title="{$product.name|escape:'htmlall':'UTF-8'}" class="product_image"><img src="{$link->getImageLink($product.link_rewrite, $product.id_image, 'home_default')|escape:'htmlall':'UTF-8'}" alt="{$product.name|escape:'htmlall':'UTF-8'}" />
                 </a>
-                <h5 class="s_title_block"><a href="{$product.link|escape:'html'}" title="{$product.name|truncate:50:'...'|escape:'htmlall':'UTF-8'}">{$product.name|truncate:35:'...'|escape:'htmlall':'UTF-8'}</a></h5>
-                <div class="product_desc"><a href="{$product.link|escape:'html'}" title="{$rees46_more|escape:html:'UTF-8'}">{$product.description_short|strip_tags|truncate:65:'...'}</a></div>
+                <h5 class="s_title_block"><a href="{$product.link|escape:'htmlall':'UTF-8'}" title="{$product.name|truncate:50:'...'|escape:'htmlall':'UTF-8'}">{$product.name|truncate:35:'...'|escape:'htmlall':'UTF-8'}</a></h5>
+                <div class="product_desc"><a href="{$product.link|escape:'htmlall':'UTF-8'}" title="{$rees46_more|escape:'htmlall':'UTF-8'}">{$product.description_short|strip_tags|truncate:65:'...'}</a></div>
                 <div>
-                    <a class="lnk_more" href="{$product.link|escape:'html'}" title="{$rees46_more|escape:html:'UTF-8'}">{$rees46_more|escape:html:'UTF-8'}</a>
+                    <a class="lnk_more" href="{$product.link|escape:'htmlall':'UTF-8'}" title="{$rees46_more|escape:'htmlall':'UTF-8'}">{$rees46_more|escape:'htmlall':'UTF-8'}</a>
                     {if $product.show_price AND !isset($restricted_country_mode) AND !$PS_CATALOG_MODE}<p class="price_container"><span class="price">{if !$priceDisplay}{convertPrice price=$product.price}{else}{convertPrice price=$product.price_tax_exc}{/if}</span></p>{else}<div style="height:21px;"></div>{/if}
                         <div style="height:23px;"></div>
                 </div>

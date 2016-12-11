@@ -24,7 +24,7 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 
-class rees46RecommendationsModuleFrontController extends ModuleFrontController
+class Rees46RecommendationsModuleFrontController extends ModuleFrontController
 {
     public function initContent()
     {

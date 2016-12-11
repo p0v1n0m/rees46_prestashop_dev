@@ -24,7 +24,7 @@
  *}
 
 <div class="rees46 rees46-recommend">
-  <div class="recommender-block-title">{$rees46_title}</div>
+  <div class="recommender-block-title">{$rees46_title|escape:'htmlall':'UTF-8'}</div>
   <div class="recommended-items">
     {foreach from=$rees46_products item="product"}
     <div class="recommended-item">
