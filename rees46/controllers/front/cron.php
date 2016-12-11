@@ -144,7 +144,7 @@ class Rees46CronModuleFrontController extends ModuleFrontController
 
             $xml .= '      <offer id="' . $product->id . '" ';
             $xml .= 'available="' . ($product->quantity > 0 ? 'true' : 'false') . '">' . "\n";
-            $xml .= '        <url>' . $this->context->link->getProductLink($product->id) . '</url>' . "\n";
+            $xml .= '        <url>'.$this->replacer($this->context->link->getProductLink($product->id)).'</url>' . "\n";
 
             $price = $product->getPrice(!Tax::excludeTaxeOption());
             $currency = new Currency((int)Configuration::get('REES46_XML_CURRENCY'));
