@@ -28,9 +28,9 @@ class rees46RecommendationsModuleFrontController extends ModuleFrontController
 {
     public function initContent()
     {
-        if (Tools::getValue('ajax') && Tools::getValue('module_id') && Tools::getValue('product_ids')) {
-            parent::initContent();
+        parent::initContent();
 
+        if (Tools::getValue('ajax') && Tools::getValue('module_id') && Tools::getValue('product_ids')) {
             die($this->module->getProducts(Tools::getValue('module_id'), Tools::getValue('product_ids')));
         }
     }

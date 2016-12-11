@@ -24,9 +24,6 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 
-//require_once(dirname(__FILE__).'../../../config/config.inc.php');
-//require_once(dirname(__FILE__).'../../../init.php');
-//require_once(dirname(__FILE__).'../../../modules/rees46/rees46.php');
 include_once('../../config/config.inc.php');
 include_once('../../init.php');
 include_once('rees46.php');

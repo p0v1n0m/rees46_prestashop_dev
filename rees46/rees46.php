@@ -916,7 +916,7 @@ class Rees46 extends Module
             ) {
                 $params['store_key'] = Configuration::get('REES46_STORE_KEY');
                 $params['store_secret'] = Configuration::get('REES46_SECRET_KEY');
-                $params['yml_file_url'] = _PS_BASE_URL_ . __PS_BASE_URI__ . 'index.php?route=tool/rees46';
+                $params['yml_file_url'] = _PS_BASE_URL_ . __PS_BASE_URI__ . 'index.php?fc=module&module=rees46&controller=xml';
 
                 $url = 'https://rees46.com/api/shop/set_yml';
 
@@ -1251,7 +1251,7 @@ class Rees46 extends Module
 
         foreach (Rees46::$fields as $field) {
             if ('REES46_XML_CRON' == $field) {
-                $helper->tpl_vars['fields_value'][$field] = ''; // xml url
+                $helper->tpl_vars['fields_value'][$field] = _PS_BASE_URL_ . __PS_BASE_URI__ . 'index.php?fc=module&module=rees46&controller=cron';
             } elseif ('REES46_ORDER' == substr($field, 0, 12)) {
                 if (is_array(json_decode(Configuration::get($field), true))) {
                     foreach (OrderState::getOrderStates((int)$this->context->language->id) as $order_status) {
