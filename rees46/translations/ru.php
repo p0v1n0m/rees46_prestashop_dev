@@ -47,7 +47,7 @@ $_MODULE['<{rees46}prestashop>rees46_5259ae4afb5996ff48788b2fa720114c'] = 'Ре�
 $_MODULE['<{rees46}prestashop>rees46_ec211f7c20af43e742bf2570c3cb84f9'] = 'Добавить';
 $_MODULE['<{rees46}prestashop>rees46_6a26f548831e6a8c26bfbbd9f6ec61e0'] = 'Помощь';
 $_MODULE['<{rees46}prestashop>rees46_7995a6f780b11416546cb18918cc3f3b'] = 'Документация: ';
-$_MODULE['<{rees46}prestashop>rees46_4992d553c02c6ce1790b49b33a7c5670'] = 'http://docs.rees46.com/pages/viewpage.action?pageId=1835241';
+$_MODULE['<{rees46}prestashop>rees46_4992d553c02c6ce1790b49b33a7c5670'] = 'http://docs.rees46.com/pages/viewpage.action?pageId=7639577';
 $_MODULE['<{rees46}prestashop>rees46_e1c5367175e7f9934b18ce1cd4b53024'] = 'Блок рекомендаций';
 $_MODULE['<{rees46}prestashop>rees46_d412701c5d2d025a0a5f4c5da40d945f'] = 'Возможно, вам это понравится';
 $_MODULE['<{rees46}prestashop>rees46_949e9c442b5128613c29d8a3b3857e25'] = 'С этим товаром покупают';

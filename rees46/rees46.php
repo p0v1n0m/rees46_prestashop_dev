@@ -712,7 +712,7 @@ class Rees46 extends Module
                             $modules[$key]['params'] = $params;
                         }
                     } elseif ($module['type'] == 'recently_viewed') {
-                        $modules[$key]['params'] = Tools::jsonEncode($params);
+                        $modules[$key]['params'] = $params;
                     } elseif ($module['type'] == 'buying_now') {
                         if (isset($item)) {
                             $params['item'] = $item;
